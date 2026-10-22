@@ -187,7 +187,7 @@ export const policies = pol.policies;
 export const readReceipts = pol.receipts;
 
 export const SIGN_FLOW = [
-  { step: 'Dibuat', who: 'Rina Kartika (QMR)', at: '2026-10-14 10:15' },
+  { step: 'Dibuat', who: 'Muammar Qois Al Qorni (QMR)', at: '2026-10-14 10:15' },
   { step: 'Diajukan', who: 'Manager HR & GA', at: '2026-10-14 11:20' },
   { step: 'Disetujui', who: 'Direktur Operasional', at: '2026-10-15 13:45' },
   { step: 'Aktif', who: 'Direktur Utama', at: '2026-10-15 14:10' },

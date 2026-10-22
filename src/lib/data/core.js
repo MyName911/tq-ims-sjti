@@ -17,7 +17,7 @@ export const CONSULTANT = {
   short: 'TQ',
 };
 
-export const DEMO_USER = { name: 'Rina Kartika', role: 'Management Representative (QMR)' };
+export const DEMO_USER = { name: 'Muammar Qois Al Qorni', role: 'Management Representative (QMR)' };
 
 // Data berjalan Januari-Oktober 2026; "hari ini" dikunci agar demo selalu konsisten.
 export const TODAY = '2026-10-22';
