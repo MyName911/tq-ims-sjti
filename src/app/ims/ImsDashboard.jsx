@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Target, ShieldAlert, Wrench, ClipboardCheck, MessageSquareHeart, FileText, Activity, TrendingUp, Crosshair, Bell, Zap,
-  History, Link2, Smile, Users, Network, Database, Factory, UserSquare, ShoppingBag, BarChart3, Cloud, ArrowRight,
+  Target, ShieldAlert, Wrench, ClipboardCheck, MessageSquareHeart, FileText, Users, Network, Database, Factory, UserSquare, ShoppingBag, BarChart3,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, Gauge, Kpi, Progress, Seg, SeeAll } from '@/components/ui';
@@ -18,7 +17,7 @@ import { documents } from '@/lib/data/documents';
 import { employees } from '@/lib/data/skill';
 import { LAST6, MONTHS, countBy, fmtDate, fmtNum, monthLabel, monthShort, pct } from '@/lib/data/core';
 import { drillHref } from '@/lib/datasets';
-import { MODULES, moduleById } from '@/lib/modules';
+import { moduleById } from '@/lib/modules';
 import { NOTIFICATIONS, ACTIVITIES } from '@/lib/activity';
 
 const mod = moduleById('ims');
@@ -77,15 +76,15 @@ export default function ImsDashboard() {
   const neg = feedback.filter((f) => f.sentimen === 'Negatif').length;
   const okrSt = countBy(okrs, 'status');
   const trend = MONTHS.map((m) => ({ label: monthShort(m), bulan: m, ...Object.fromEntries(TREND.map((t) => [t.label, kpiMonthly.find((k) => k.kode === t.kode && k.bulan === m).realisasi])) }));
-  const riskList = risks.filter((r) => r.status !== 'Closed' && (riskTab === 'Semua' || r.jenis === riskTab)).sort((a, b) => b.skor - a.skor).slice(0, 5);
+  const riskList = risks.filter((r) => r.status !== 'Closed' && (riskTab === 'Semua' || r.jenis === riskTab)).sort((a, b) => b.skor - a.skor).slice(0, 12);
   const capaList = capas.filter((c) => (capaTab === 'Semua' ? c.status !== 'Closed' : c.status === capaTab)).sort((a, b) => b.tanggal.localeCompare(a.tanggal)).slice(0, 5);
   const audList = audits.filter((a) => a.status === audTab).sort((a, b) => (audTab === 'Terjadwal' ? a.tanggal.localeCompare(b.tanggal) : b.tanggal.localeCompare(a.tanggal))).slice(0, 5);
   const docList = documents.filter((d) => d.kategori === docTab && d.status === 'Aktif').sort((a, b) => b.tglTerbit.localeCompare(a.tglTerbit)).slice(0, 5);
-  const depts = ['Sewing', 'Quality Control', 'Cutting', 'Finishing', 'Maintenance'].map((d) => {
+  const depts = [...new Set(employees.map((e) => e.departemen))].map((d) => {
     const list = employees.filter((e) => e.departemen === d);
     const ok = list.filter((e) => e.status === 'Kompeten').length;
     return { d, total: list.length, ok, gap: list.length - ok };
-  });
+  }).sort((a, b) => b.total - a.total);
   const fbTrend = LAST6.map((m) => ({ label: monthShort(m), bulan: m, value: pct(feedback.filter((f) => f.bulan === m && f.sentimen === 'Positif').length, feedback.filter((f) => f.bulan === m).length, 0) }));
 
   return (
@@ -102,7 +101,7 @@ export default function ImsDashboard() {
             </div>
 
             <div className="grid-2">
-              <Card title="Kinerja organisasi" icon={Activity}>
+              <Card title="Kinerja organisasi">
                 <div className="gauge-grid">
                   {PERF.map((p) => {
                     const k = lastOf(p.kode);
@@ -116,7 +115,7 @@ export default function ImsDashboard() {
                   })}
                 </div>
               </Card>
-              <Card title="Tren KPI utama" icon={TrendingUp}>
+              <Card title="Tren KPI utama">
                 <TrendLines
                   data={trend}
                   height={210}
@@ -131,12 +130,12 @@ export default function ImsDashboard() {
             </div>
 
             <div className="grid-3">
-              <Card title="Status sasaran (OKR)" icon={Crosshair}>
+              <Card title="Status OKR">
                 <Donut height={130} legend="bottom" centerValue={`${pct((okrSt.Tercapai ?? 0), okrs.length, 0)}%`} centerLabel="Tercapai" data={Object.keys(OKR_COLORS).map((s) => ({ name: s, value: okrSt[s] ?? 0, color: OKR_COLORS[s], href: drillHref('okr', { status: s }, { from: 'ims', src: `OKR, ${s}` }) }))} />
               </Card>
               <Card title="Risiko & peluang" flush actions={<SeeAll href={drillHref('risks', riskTab === 'Semua' ? {} : { jenis: riskTab }, { from: 'ims' })} />} style={{ gridColumn: 'span 2' }}>
                 <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={riskTab} onChange={setRiskTab} options={['Semua', 'Risiko', 'Peluang']} /></div>
-                <div className="table-wrapper">
+                <div className="table-wrapper fill-scroll">
                   <table className="table-compact">
                     <thead><tr><th>Risiko / peluang</th><th>Kategori</th><th>Level</th><th>Status</th></tr></thead>
                     <tbody>
@@ -152,22 +151,22 @@ export default function ImsDashboard() {
             </div>
 
             <div className="grid-2">
-              <Card title="CAPA tracking" flush actions={<SeeAll href={drillHref('capa', capaTab === 'Semua' ? { status: ['Open', 'On Progress', 'Overdue'] } : { status: capaTab }, { from: 'ims' })} />}>
+              <Card title="Pemantauan CAPA" flush actions={<SeeAll href={drillHref('capa', capaTab === 'Semua' ? { status: ['Open', 'On Progress', 'Overdue'] } : { status: capaTab }, { from: 'ims' })} />}>
                 <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={capaTab} onChange={setCapaTab} options={[['Semua', 'Aktif'], 'Open', 'On Progress', 'Overdue']} /></div>
                 <div className="table-wrapper">
                   <table className="table-compact">
-                    <thead><tr><th>No. CAPA</th><th>Temuan</th><th>Status</th><th>Progres</th></tr></thead>
+                    <thead><tr><th>Temuan</th><th>Status</th><th>Progres</th></tr></thead>
                     <tbody>
                       {capaList.map((c) => (
                         <tr key={c.id} className="clickable" onClick={() => router.push(drillHref('capa', { id: c.id }, { open: c.id, from: 'ims' }))}>
-                          <td className="cell-code">{c.id}</td><td className="cell-title">{c.masalah}</td><td><Badge value={c.status} /></td><td style={{ minWidth: 100 }}><Progress value={c.progress} /></td>
+                          <td><div className="cell-title">{c.masalah}</div><div className="cell-code">{c.id}</div></td><td><Badge value={c.status} /></td><td style={{ minWidth: 96 }}><Progress value={c.progress} /></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </Card>
-              <Card title="Feedback pelanggan" icon={Smile}>
+              <Card title="Feedback pelanggan">
                 <div className="flex items-center gap-3" style={{ marginBottom: 8 }}>
                   <Gauge value={pct(pos, feedback.length, 0)} size={84} color="var(--green-500)" />
                   <div style={{ flex: 1 }}>
@@ -184,7 +183,7 @@ export default function ImsDashboard() {
 
             <div className="grid-3">
               <Card title="E-Audit" flush actions={<SeeAll href={drillHref('audits', { status: audTab }, { from: 'ims' })} />}>
-                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={audTab} onChange={setAudTab} options={['Terjadwal', 'Dalam Proses', 'Selesai']} /></div>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={audTab} onChange={setAudTab} options={[['Terjadwal', 'Jadwal'], ['Dalam Proses', 'Berjalan'], ['Selesai', 'Selesai']]} /></div>
                 <div className="feed">
                   {audList.map((a) => (
                     <Link key={a.id} href={drillHref('audits', { id: a.id }, { open: a.id, from: 'ims' })} className="feed-item" style={{ padding: '9px 16px' }}>
@@ -195,7 +194,7 @@ export default function ImsDashboard() {
                 </div>
               </Card>
               <Card title="E-Document" flush actions={<SeeAll href={drillHref('documents', { kategori: docTab }, { from: 'ims' })} />}>
-                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={docTab} onChange={setDocTab} options={[['Prosedur (SOP)', 'SOP'], ['Formulir', 'Form'], ['Manual', 'Manual'], ['Instruksi Kerja', 'IK']]} /></div>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}><Seg value={docTab} onChange={setDocTab} options={[['Prosedur (SOP)', 'SOP'], ['Instruksi Kerja', 'IK'], ['Formulir', 'Form']]} /></div>
                 <div className="feed">
                   {docList.map((d) => (
                     <Link key={d.id} href={drillHref('documents', { id: d.id }, { open: d.id, from: 'ims' })} className="feed-item" style={{ padding: '9px 16px' }}>
@@ -205,23 +204,25 @@ export default function ImsDashboard() {
                 </div>
               </Card>
               <Card title="Skill matrix & e-learning" flush actions={<SeeAll href={drillHref('employees', {}, { from: 'ims' })} />}>
-                <table className="table-compact">
-                  <thead><tr><th>Departemen</th><th className="num">Total</th><th className="num">Kompeten</th><th className="num">Gap</th></tr></thead>
-                  <tbody>
-                    {depts.map((x) => (
-                      <tr key={x.d} className="clickable" onClick={() => router.push(drillHref('employees', { departemen: x.d }, { from: 'ims', src: `Skill matrix, ${x.d}` }))}>
-                        <td>{x.d}</td><td className="num">{x.total}</td><td className="num">{x.ok}</td><td className="num" style={{ color: x.gap ? 'var(--red-600)' : undefined, fontWeight: 600 }}>{x.gap}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="table-wrapper fill-scroll" style={{ minHeight: 200 }}>
+                  <table className="table-compact">
+                    <thead><tr><th>Departemen</th><th className="num">Total</th><th className="num">Kompeten</th><th className="num">Gap</th></tr></thead>
+                    <tbody>
+                      {depts.map((x) => (
+                        <tr key={x.d} className="clickable" onClick={() => router.push(drillHref('employees', { departemen: x.d }, { from: 'ims', src: `Skill matrix, ${x.d}` }))}>
+                          <td>{x.d}</td><td className="num">{x.total}</td><td className="num">{x.ok}</td><td className="num" style={{ color: x.gap ? 'var(--red-600)' : undefined, fontWeight: 600 }}>{x.gap}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <div style={{ padding: '10px 16px' }}><Progress value={pct(employees.filter((e) => e.status === 'Kompeten').length, employees.length)} /><span className="muted">Kompetensi rata-rata seluruh karyawan</span></div>
               </Card>
             </div>
           </div>
 
           <div className="stack">
-            <Card title="Notifikasi & to-do" icon={Bell} flush>
+            <Card title="Notifikasi" flush>
               <div className="feed">
                 {NOTIFICATIONS.map((n) => (
                   <Link key={n.id} href={n.href} className="feed-item">
@@ -232,15 +233,15 @@ export default function ImsDashboard() {
                 ))}
               </div>
             </Card>
-            <Card title="Quick action" icon={Zap}>
+            <Card title="Akses cepat">
               <div className="grid-2" style={{ gap: 8 }}>
                 {[
                   ['Buat CAPA', '/capa'], ['Upload dokumen', '/edoc'], ['Buat audit', '/audit'], ['Input risiko', '/risk'], ['Input feedback', '/audit'], ['Lihat laporan', '/executive'],
                 ].map(([l, h]) => <Link key={l} href={h} className="btn btn-outline btn-sm" style={{ justifyContent: 'flex-start' }}>{l}</Link>)}
               </div>
             </Card>
-            <Card title="Aktivitas terbaru" icon={History} flush>
-              <div className="feed">
+            <Card title="Aktivitas terbaru" flush className="grow">
+              <div className="feed fill-scroll">
                 {ACTIVITIES.map((a, i) => (
                   <Link key={i} href={a.href} className="feed-item">
                     <span className="user-avatar" style={{ width: 32, height: 32, fontSize: 11 }}>{a.who.split(' ').map((x) => x[0]).slice(0, 2).join('')}</span>
@@ -250,17 +251,10 @@ export default function ImsDashboard() {
                 ))}
               </div>
             </Card>
-            <Card title="Tautan cepat" icon={Link2}>
-              <div style={{ display: 'grid', gap: 4 }}>
-                {MODULES.filter((m) => m.id !== 'ims').map((m) => (
-                  <Link key={m.id} href={`/${m.id}`} className="legend-row"><span className="nav-letter"><m.icon aria-hidden /></span><span className="name">{m.name}</span><ArrowRight size={14} /></Link>
-                ))}
-              </div>
-            </Card>
           </div>
         </div>
 
-        <Card title="Peta proses bisnis & integrasi sistem" icon={Network}>
+        <Card title="Peta proses bisnis & integrasi sistem">
           <div className="process-map">
             {PROCESS.map(([t, s, id], i) => (
               <Link key={t} href={`/${id}`} className="process-step" style={{ background: PROCESS_COLORS[i] }}>
@@ -269,17 +263,11 @@ export default function ImsDashboard() {
             ))}
           </div>
           <div className="section-label">Integrasi sistem & data</div>
-          <div className="flex items-center gap-3 wrap">
-            <div className="flow" style={{ flex: 1, gridAutoColumns: 'minmax(96px, 1fr)' }}>
-              {SYSTEMS.map((s) => {
-                const inner = (<><div className="flow-num tone-blue" style={{ margin: '0 auto 6px' }}><s.icon size={16} /></div><h4 style={{ fontSize: 11.5, textAlign: 'center' }}>{s.label}</h4></>);
-                return s.href ? <Link key={s.label} href={s.href} className="flow-step" style={{ padding: 10 }}>{inner}</Link> : <div key={s.label} className="flow-step" style={{ padding: 10, borderStyle: 'dashed' }}>{inner}</div>;
-              })}
-            </div>
-            <div className="flex items-center gap-2" style={{ color: 'var(--brand-700)', fontWeight: 700, fontSize: 13 }}>
-              <Cloud size={34} color="var(--brand-400)" />
-              <span>Satu data<br />Satu sistem<br />Satu tujuan</span>
-            </div>
+          <div className="flow" style={{ '--flow-min': '96px' }}>
+            {SYSTEMS.map((s) => {
+              const inner = (<><div className="flow-num tone-blue" style={{ margin: '0 auto 6px' }}><s.icon size={16} /></div><h4 style={{ fontSize: 11.5, textAlign: 'center' }}>{s.label}</h4></>);
+              return s.href ? <Link key={s.label} href={s.href} className="flow-step" style={{ padding: 10 }}>{inner}</Link> : <div key={s.label} className="flow-step" style={{ padding: 10, borderStyle: 'dashed' }}>{inner}</div>;
+            })}
           </div>
         </Card>
       </div>

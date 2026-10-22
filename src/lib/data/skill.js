@@ -1,4 +1,4 @@
-// Modul D, Kompetensi (Klausul 7.2), kesadaran (7.3), dan pengetahuan organisasi (7.1.6).
+// Data dummy: Kompetensi (Klausul 7.2), kesadaran (7.3), dan pengetahuan organisasi (7.1.6).
 import { rng, PEOPLE, LAST6, MONTHS, TODAY, addDays, pad, daysBetween } from './core';
 
 export const SKILLS = ['Teknis Garmen', 'Mutu & Inspeksi', 'K3 & 5S', 'Digital', 'Leadership', 'Problem Solving'];

@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ClipboardList, ClipboardCheck, SearchCheck, Wrench, MessageSquareHeart, Star, TrendingUp, PieChart as PieIcon, MapPin,
-  CalendarDays, FileWarning, Smile, Frown, Meh, Sparkles, Tablet, Camera, CheckCircle2, CalendarCheck, PlayCircle, ShieldCheck, Flag,
+  ClipboardList, ClipboardCheck, SearchCheck, Wrench, MessageSquareHeart, Star, Camera, CalendarCheck, PlayCircle, ShieldCheck, Flag,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Gauge, Kpi, PageHeader, SeeAll, Stars, Seg } from '@/components/ui';
@@ -59,8 +58,8 @@ export default function AuditDashboard() {
     'Tindakan korektif': capaAudit.filter((c) => c.bulan === m).length,
   }));
   const topArea = Object.entries(countBy(fnd, 'area')).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const recentAudits = [...done].sort((a, b) => b.tanggal.localeCompare(a.tanggal)).slice(0, 6);
-  const recentFindings = [...fnd].sort((a, b) => b.tanggal.localeCompare(a.tanggal)).slice(0, 6);
+  const recentAudits = [...done].sort((a, b) => b.tanggal.localeCompare(a.tanggal)).slice(0, 12);
+  const recentFindings = [...fnd].sort((a, b) => b.tanggal.localeCompare(a.tanggal)).slice(0, 12);
   const sentTrend = LAST6.map((m) => ({ label: monthShort(m), bulan: m, ...Object.fromEntries(Object.keys(SENT_COLORS).map((s) => [s, fb6.filter((f) => f.bulan === m && f.sentimen === s).length])) }));
   const fbList = (fbTab === 'Semua' ? fb6 : fb6.filter((f) => f.tipe === fbTab)).slice(0, 8);
   const scheduled = aud.filter((a) => a.status === 'Terjadwal');
@@ -103,7 +102,7 @@ export default function AuditDashboard() {
         </div>
 
         <div className="grid-3">
-          <Card title="Tren audit, temuan & tindakan korektif" icon={TrendingUp} style={{ gridColumn: 'span 2' }}>
+          <Card title="Tren audit, temuan & tindakan korektif" style={{ gridColumn: 'span 2' }}>
             <StackedBars
               data={trend}
               stacked={false}
@@ -115,26 +114,26 @@ export default function AuditDashboard() {
             />
             <div className="legend-inline"><span><i style={{ background: '#3b5bdb' }} />Audit</span><span><i style={{ background: '#d4a73a' }} />Temuan</span><span><i style={{ background: '#5f6f86' }} />Tindakan korektif (CAPA)</span></div>
           </Card>
-          <Card title="Status temuan audit" icon={PieIcon}>
+          <Card title="Status temuan audit">
             <Donut height={170} legend="bottom" centerLabel="Temuan" data={Object.keys(FIND_COLORS).map((s) => ({ name: s, value: fst[s] ?? 0, color: FIND_COLORS[s], href: hrefF({ status: s }, `Status temuan, ${s}`) }))} />
           </Card>
         </div>
 
         <div className="grid-3">
-          <Card title="Top 5 area dengan temuan terbanyak" icon={MapPin}>
+          <Card title="Top 5 area dengan temuan terbanyak">
             <BarList items={topArea.map(([a, n]) => ({ label: a, value: n, href: hrefF({ area: a }, `Top area, ${a}`) }))} />
             <div className="section-label">Kategori temuan</div>
             <BarList color="#8fa2e6" items={['Major', 'Minor', 'Observasi', 'OFI'].map((k) => ({ label: k, value: fnd.filter((f) => f.kategori === k).length, href: hrefF({ kategori: k }, `Kategori temuan, ${k}`) }))} />
           </Card>
-          <Card title="Kepuasan pelanggan (rating)" icon={Smile}>
+          <Card title="Rating kepuasan pelanggan">
             <div className="flex items-center gap-3" style={{ marginBottom: 10 }}>
               <Gauge value={(rating / 5) * 100} size={96} color="var(--green-500)" />
               <div><div style={{ fontSize: 26, fontWeight: 700 }}>{fmtNum(rating, 1)} <span className="muted">/ 5</span></div><Stars value={Math.round(rating)} /><div className="muted">{fb6.length} ulasan</div></div>
             </div>
             <BarList items={[5, 4, 3, 2, 1].map((r) => ({ label: `${r} ★`, value: ratingCount[r] ?? 0, href: drillHref('feedback', { rating: r }, { src: `Rating ${r} bintang` }), color: r >= 4 ? '#2f8a5f' : r === 3 ? '#d4a73a' : '#c2453d' }))} labelWidth={40} />
           </Card>
-          <Card title="Insight & rekomendasi" icon={Sparkles}>
-            <div style={{ display: 'grid', gap: 12, fontSize: 13.5, color: 'var(--gray-700)' }}>
+          <Card title="Catatan audit">
+            <div className="notes">
               {growth && <p>Area <b>{growth[0]}</b> memiliki temuan terbanyak ({growth[1]} temuan). Disarankan audit proses lanjutan dan penguatan inline inspection. <Link href={hrefF({ area: growth[0] })}>Lihat temuan</Link></p>}
               <p><b>{fst.Terbuka ?? 0}</b> temuan masih terbuka dan <b>{fnd.filter((f) => f.terlambat === 'Ya').length}</b> melewati deadline. <Link href={hrefF({ terlambat: 'Ya' })}>Tinjau sekarang</Link></p>
               <p>{pct(fb6.filter((f) => f.sentimen === 'Positif').length, fb6.length)}% feedback bersentimen positif. Komplain didominasi kategori <b>{Object.entries(countBy(fb6.filter((f) => f.tipe === 'Komplain'), 'kategori')).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '-'}</b>. <Link href={drillHref('feedback', { tipe: 'Komplain' })}>Lihat komplain</Link></p>
@@ -143,8 +142,8 @@ export default function AuditDashboard() {
         </div>
 
         <div className="grid-2">
-          <Card title="Audit terbaru" icon={CalendarDays} flush actions={<SeeAll href={hrefA()} />}>
-            <div className="table-wrapper">
+          <Card title="Audit terbaru" flush actions={<SeeAll href={hrefA()} />}>
+            <div className="table-wrapper fill-scroll" style={{ minHeight: 380 }}>
               <table>
                 <thead><tr><th>Tanggal</th><th>Area</th><th>Auditor</th><th>Status</th><th className="num">Skor</th></tr></thead>
                 <tbody>
@@ -161,8 +160,8 @@ export default function AuditDashboard() {
               </table>
             </div>
           </Card>
-          <Card title="Temuan terbaru" icon={FileWarning} flush actions={<SeeAll href={hrefF()} />}>
-            <div className="table-wrapper">
+          <Card title="Temuan terbaru" flush actions={<SeeAll href={hrefF()} />}>
+            <div className="table-wrapper fill-scroll" style={{ minHeight: 380 }}>
               <table>
                 <thead><tr><th>Area</th><th>Deskripsi temuan</th><th>Prioritas</th><th>Status</th></tr></thead>
                 <tbody>
@@ -180,7 +179,7 @@ export default function AuditDashboard() {
           </Card>
         </div>
 
-        <Card title="Alur proses E-Audit & feedback">
+        <Card title="Alur E-Audit">
           <div className="flow">
             {steps.map((s, i) => (
               <Link key={s.n} href={s.href} className="flow-step">
@@ -194,16 +193,14 @@ export default function AuditDashboard() {
         </Card>
 
         <div className="grid-3">
-          <Card title="Feedback pelanggan (real-time)" icon={MessageSquareHeart} flush actions={<SeeAll href={drillHref('feedback', fbTab === 'Semua' ? {} : { tipe: fbTab })} />}>
+          <Card title="Feedback pelanggan" flush actions={<SeeAll href={drillHref('feedback', fbTab === 'Semua' ? {} : { tipe: fbTab })} />}>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--gray-100)' }}>
               <Seg value={fbTab} onChange={setFbTab} options={['Semua', 'Pujian', 'Saran', 'Komplain'].map((t) => [t, t])} />
             </div>
-            <div className="feed" style={{ maxHeight: 380, overflowY: 'auto' }}>
+            <div className="feed fill-scroll">
               {fbList.map((f) => {
-                const Icon = f.sentimen === 'Positif' ? Smile : f.sentimen === 'Netral' ? Meh : Frown;
                 return (
                   <Link key={f.id} href={drillHref('feedback', { id: f.id }, { open: f.id })} className="feed-item">
-                    <span className={`feed-icon tone-${f.sentimen === 'Positif' ? 'mint' : f.sentimen === 'Netral' ? 'sun' : 'red'}`}><Icon /></span>
                     <span className="feed-body"><strong>{f.pelanggan}</strong><br />{f.komentar}<br /><Stars value={f.rating} /></span>
                     <span className="feed-time">{fmtDate(f.tanggal)}</span>
                   </Link>
@@ -211,7 +208,7 @@ export default function AuditDashboard() {
               })}
             </div>
           </Card>
-          <Card title="Sentimen feedback per bulan" icon={TrendingUp}>
+          <Card title="Sentimen feedback per bulan">
             <StackedBars
               data={sentTrend}
               height={250}
@@ -222,8 +219,8 @@ export default function AuditDashboard() {
             <div className="section-label">Kanal feedback</div>
             <BarList color="#2c4aa8" items={Object.entries(countBy(fb6, 'kanal')).sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ label: k, value: n, href: drillHref('feedback', { kanal: k }, { src: `Kanal, ${k}` }) }))} />
           </Card>
-          <Card title="Contoh form audit (tablet)" icon={Tablet}>
-            <div style={{ border: '8px solid var(--gray-800)', borderRadius: 18, padding: 12, background: 'var(--gray-25)' }}>
+          <Card title="Form audit digital">
+            <div className="device-frame">
               <div className="flex justify-between items-center" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--brand-700)' }}>
                 <span>Audit Produksi, Sewing</span><span className="muted">Pertanyaan {qi + 1} dari {QUESTIONS.length}</span>
               </div>
@@ -235,17 +232,12 @@ export default function AuditDashboard() {
                   </label>
                 ))}
               </div>
-              <div className="flex gap-2" style={{ marginTop: 10 }}>
+              <div className="flex gap-2" style={{ marginTop: 'auto', paddingTop: 12 }}>
                 <button type="button" className="btn btn-outline btn-sm"><Camera />Foto</button>
                 <div className="spacer" style={{ flex: 1 }} />
                 <button type="button" className="btn btn-soft btn-sm" disabled={qi === 0} onClick={() => setQi((i) => i - 1)}>Kembali</button>
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setQi((i) => (i + 1) % QUESTIONS.length)}>{qi === QUESTIONS.length - 1 ? 'Selesai' : 'Lanjut'}</button>
               </div>
-            </div>
-            <div style={{ display: 'grid', gap: 6, marginTop: 12, fontSize: 13 }}>
-              {['Checklist digital & offline mode', 'Upload foto & dokumen bukti', 'Temuan otomatis jadi CAPA', 'Tanda tangan digital auditor', 'Sinkronisasi otomatis ke sistem'].map((t) => (
-                <span key={t} className="flex items-center gap-2"><CheckCircle2 size={16} color="var(--green-500)" />{t}</span>
-              ))}
             </div>
           </Card>
         </div>

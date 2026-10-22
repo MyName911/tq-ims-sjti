@@ -1,4 +1,4 @@
-// Modul G, Ketidaksesuaian dan tindakan korektif (Klausul 10.2).
+// Data dummy: Ketidaksesuaian dan tindakan korektif (Klausul 10.2).
 import { rng, PEOPLE, MONTHS, TODAY, addDays, pad, monthOf } from './core';
 import { findings, feedback } from './audit';
 

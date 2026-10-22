@@ -1,17 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight, ChevronRight, MousePointerClick, Star } from 'lucide-react';
+import { ChevronRight, MousePointerClick, Star } from 'lucide-react';
 import { toneOf } from '@/lib/tones';
 import { fmtDate, fmtNum, monthLabel } from '@/lib/data/core';
 
-export function Card({ title, subtitle, icon: Icon, actions, children, flush, footer, className = '', style }) {
+export function Card({ title, subtitle, actions, children, flush, footer, className = '', style }) {
   return (
     <section className={`card ${className}`} style={style}>
       {(title || actions) && (
         <div className="card-header">
           <div style={{ minWidth: 0 }}>
-            <div className="card-title">{Icon && <Icon aria-hidden />}{title}</div>
+            <div className="card-title">{title}</div>
             {subtitle && <div className="card-subtitle">{subtitle}</div>}
           </div>
           {actions && <div className="card-actions">{actions}</div>}
@@ -45,7 +45,6 @@ export function Kpi({ label, value, unit, icon: Icon, tone = 'blue', hint, delta
           </div>
         )}
       </div>
-      {href && <ArrowUpRight className="kpi-go" aria-hidden />}
     </>
   );
   return href ? <Link href={href} className="kpi-card">{body}</Link> : <div className="kpi-card">{body}</div>;

@@ -1,4 +1,4 @@
-// Modul F, Kepuasan pelanggan (Klausul 9.1.2) dan audit internal (9.2).
+// Data dummy: Kepuasan pelanggan (Klausul 9.1.2) dan audit internal (9.2).
 import { rng, PEOPLE, MONTHS, LAST6, TODAY, addDays, pad, monthOf } from './core';
 
 export const AUDIT_TYPES = ['Audit Internal SMM', 'Audit Proses', 'Audit Produk (Final)', 'Audit Pemasok', 'Audit Social Compliance', 'Audit Eksternal'];

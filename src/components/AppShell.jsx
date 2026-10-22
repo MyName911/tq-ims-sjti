@@ -54,7 +54,7 @@ export default function AppShell({ moduleId, datasetKey, title, subtitle, childr
         <main id="main-content" className="page-container page-enter">{children}</main>
         <footer className="app-footer no-print">
           <span>© 2026 {CONSULTANT.name}</span>
-          <span>{COMPANY.name}, data dummy</span>
+          <span>{COMPANY.name}</span>
         </footer>
       </div>
     </div>

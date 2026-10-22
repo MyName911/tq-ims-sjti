@@ -1,4 +1,4 @@
-// Modul B, Kepemimpinan & kebijakan (Klausul 5), pemantauan kinerja (9.1) dan tinjauan manajemen (9.3).
+// Data dummy: Kepemimpinan & kebijakan (Klausul 5), pemantauan kinerja (9.1) dan tinjauan manajemen (9.3).
 import { rng, MONTHS, PEOPLE, COMPANY, addDays, pad } from './core';
 import { employees } from './skill';
 

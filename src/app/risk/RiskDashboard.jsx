@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Flame, Lightbulb, Target, AlertTriangle, Grid3x3, Layers, Building2, ListChecks, Crosshair, Sparkles } from 'lucide-react';
+import { ShieldAlert, Flame, Lightbulb, Target, Crosshair } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Kpi, PageHeader, Progress, Seg, SeeAll } from '@/components/ui';
 import { BarList, Donut, StackedBars } from '@/components/charts';
@@ -80,7 +80,7 @@ export default function RiskDashboard() {
           <Card
             title="Heatmap risiko"
            
-            icon={Grid3x3}
+           
             actions={<Seg value={mode} onChange={setMode} options={[['inherent', 'Inherent'], ['residual', 'Residual']]} />}
           >
             <div className="heatmap">
@@ -113,17 +113,17 @@ export default function RiskDashboard() {
             </div>
           </Card>
           <div className="stack">
-            <Card title="Level risiko residual" icon={Layers}>
+            <Card title="Level risiko residual">
               <Donut height={150} centerLabel="Risiko aktif" data={RISK_LEVELS.map((l) => ({ name: l, value: residualLv[l] ?? 0, color: LEVEL_COLORS[l], href: href({ jenis: 'Risiko', residualLevel: l, status: ['Open', 'Mitigasi', 'Monitoring'] }, `Residual ${l}`) }))} />
             </Card>
-            <Card title="Status penanganan" icon={ListChecks}>
+            <Card title="Status penanganan">
               <BarList items={['Open', 'Mitigasi', 'Monitoring'].map((s) => ({ label: s, value: byStatus[s] ?? 0, href: href({ jenis: 'Risiko', status: s }, `Status risiko ${s}`), color: s === 'Open' ? '#c2453d' : s === 'Mitigasi' ? '#d4a73a' : '#2c4aa8' }))} />
             </Card>
           </div>
         </div>
 
         <div className="grid-3-2">
-          <Card title="Risiko per kategori & level" subtitle="Klik segmen untuk detail" icon={Layers}>
+          <Card title="Risiko per kategori & level">
             <StackedBars
               data={byCat}
               height={260}
@@ -131,13 +131,13 @@ export default function RiskDashboard() {
               hrefFor={(row, l) => href({ jenis: 'Risiko', kategori: row.kategori, ...(l && { level: l }), status: ['Open', 'Mitigasi', 'Monitoring'] }, `Kategori ${row.kategori}${l ? `, ${l}` : ''}`)}
             />
           </Card>
-          <Card title="Risiko aktif per departemen" icon={Building2}>
+          <Card title="Risiko aktif per departemen">
             <BarList items={byDept.map(([d, n]) => ({ label: d, value: n, href: href({ jenis: 'Risiko', departemen: d, status: ['Open', 'Mitigasi', 'Monitoring'] }, `Risiko ${d}`) }))} color="#b9c3d6" />
           </Card>
         </div>
 
         <div className="grid-main-side">
-          <Card title="Register risiko teratas" icon={AlertTriangle} flush actions={<SeeAll href={href({ jenis: 'Risiko' })} />}>
+          <Card title="Register risiko teratas" flush actions={<SeeAll href={href({ jenis: 'Risiko' })} />}>
             <div className="table-wrapper">
               <table>
                 <thead><tr><th>Kode</th><th>Risiko</th><th className="num">Skor</th><th>Level</th><th>Residual</th><th>Status</th><th>Target</th></tr></thead>
@@ -157,11 +157,10 @@ export default function RiskDashboard() {
               </table>
             </div>
           </Card>
-          <Card title="Register peluang" icon={Sparkles} flush actions={<SeeAll href={href({ jenis: 'Peluang' })} />}>
+          <Card title="Register peluang" flush actions={<SeeAll href={href({ jenis: 'Peluang' })} />}>
             <div className="feed">
               {opps.sort((a, b) => b.skor - a.skor).map((o) => (
                 <Link key={o.id} href={drillHref('risks', { id: o.id }, { open: o.id })} className="feed-item">
-                  <span className="feed-icon tone-sun"><Lightbulb /></span>
                   <span className="feed-body"><strong>{o.deskripsi}</strong><br />{o.pengendalian}</span>
                   <Badge value={o.status} />
                 </Link>
@@ -171,7 +170,7 @@ export default function RiskDashboard() {
         </div>
 
         <div className="grid-1-2">
-          <Card title="Status sasaran (OKR)" subtitle="Seluruh key result FY 2026" icon={Target}>
+          <Card title="Status OKR" subtitle="Seluruh key result FY 2026">
             <Donut
               height={160}
               centerValue={`${pct((okrSt.Tercapai ?? 0) + (okrSt['On Track'] ?? 0), okrs.length, 0)}%`}

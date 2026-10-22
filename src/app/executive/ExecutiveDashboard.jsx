@@ -3,10 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  Target, ShieldAlert, Lightbulb, FileCheck2, Gauge as GaugeIcon, TrendingUp, Table2, Map as MapIcon, Radar, ScrollText,
-  MailCheck, PenLine, Trophy, ArrowUp, ArrowDown, Minus, CheckCircle2, Search,
-} from 'lucide-react';
+import { Target, ShieldAlert, Lightbulb, FileCheck2, ArrowUp, ArrowDown, Minus, CheckCircle2, Search } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, Gauge, Kpi, PageHeader, Seg, SeeAll, Progress } from '@/components/ui';
 import { BarList, Donut, Sparkline, TrendLines } from '@/components/charts';
@@ -72,7 +69,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="grid-2">
-          <Card title="Overall business performance" icon={GaugeIcon}>
+          <Card title="Kinerja bisnis">
             <div className="gauge-grid">
               {PERSPECTIVES.map((p) => {
                 const v = perspectiveScore(p.key);
@@ -86,7 +83,7 @@ export default function ExecutiveDashboard() {
               })}
             </div>
           </Card>
-          <Card title="Tren pencapaian KPI utama" icon={TrendingUp}>
+          <Card title="Tren pencapaian KPI utama">
             <TrendLines
               data={trend}
               height={220}
@@ -104,11 +101,11 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="grid-main-side">
-          <Card title="Executive quality scorecard" icon={Table2} flush actions={<SeeAll href={drillHref('kpi', persp === 'Semua' ? {} : { perspektif: persp })} />}>
+          <Card title="Executive quality scorecard" flush actions={<SeeAll href={drillHref('kpi', persp === 'Semua' ? {} : { perspektif: persp })} />}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-100)' }}>
               <Seg value={persp} onChange={setPersp} options={[['Semua', 'Semua', kpis.length], ...PERSPECTIVES.map((p) => [p.key, p.label, kpis.filter((k) => k.perspektif === p.key).length])]} />
             </div>
-            <div className="table-wrapper" style={{ maxHeight: 440, overflowY: 'auto' }}>
+            <div className="table-wrapper fill-scroll">
               <table>
                 <thead><tr><th>KPI utama</th><th className="num">Target</th><th className="num">Realisasi</th><th>Capaian</th><th>Tren 10 bulan</th><th className="center">Arah</th></tr></thead>
                 <tbody>
@@ -129,7 +126,7 @@ export default function ExecutiveDashboard() {
             </div>
           </Card>
           <div className="stack">
-            <Card title="Risiko utama" icon={ShieldAlert} flush actions={<SeeAll href={drillHref('risks', { jenis: 'Risiko', level: ['Extreme', 'High'] }, { from: 'executive' })} />}>
+            <Card title="Risiko utama" flush actions={<SeeAll href={drillHref('risks', { jenis: 'Risiko', level: ['Extreme', 'High'] }, { from: 'executive' })} />}>
               <div className="feed">
                 {topRisks.map((r) => (
                   <Link key={r.id} href={drillHref('risks', { id: r.id }, { open: r.id, from: 'executive' })} className="feed-item">
@@ -139,7 +136,7 @@ export default function ExecutiveDashboard() {
                 ))}
               </div>
             </Card>
-            <Card title="Highlight" icon={Trophy}>
+            <Card title="Ringkasan">
               <p style={{ fontSize: 13.5, color: 'var(--gray-700)' }}>
                 {kpiStatus.Tercapai} dari {kpis.length} KPI strategis tercapai bulan ini. Perlu perhatian khusus pada{' '}
                 {lagging.slice(0, 2).map((k, i) => (
@@ -151,7 +148,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="grid-2">
-          <Card title="Analisis isu strategis (PESTEL)" subtitle="Isu aktif dari Modul A" icon={Radar}>
+          <Card title="Isu strategis PESTEL">
             <div className="factor-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
               {PESTEL_FACTORS.map((f) => (
                 <Link key={f.key} href={drillHref('pestel', { faktor: f.key, status: ['Prioritas', 'On Progress', 'Monitoring'] }, { from: 'executive', src: `Isu strategis, ${f.key}` })} className="factor-card" style={{ padding: 12 }}>
@@ -161,7 +158,7 @@ export default function ExecutiveDashboard() {
               ))}
             </div>
           </Card>
-          <Card title="Peta strategi & inisiatif" icon={MapIcon}>
+          <Card title="Peta strategi & inisiatif">
             <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--brand-600)', color: '#fff', fontSize: 13, fontWeight: 600, textAlign: 'center', marginBottom: 10 }}>
               Visi: {STRATEGY_MAP.vision}
             </div>
@@ -180,7 +177,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="grid-main-side">
-          <Card title="Digital policy management" icon={ScrollText} flush actions={<SeeAll href={drillHref('policies', polTab === 'Semua' ? {} : { status: polTab })} />}>
+          <Card title="Digital policy management" flush actions={<SeeAll href={drillHref('policies', polTab === 'Semua' ? {} : { status: polTab })} />}>
             <div className="toolbar" style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-100)' }}>
               <Seg value={polTab} onChange={setPolTab} options={POLICY_TABS.map((t) => [t, t, t === 'Semua' ? policies.length : polSt[t] ?? 0])} />
               <div className="spacer" />
@@ -189,7 +186,7 @@ export default function ExecutiveDashboard() {
                 <input className="form-input" value={polQ} onChange={(e) => setPolQ(e.target.value)} placeholder="Cari kebijakan" aria-label="Cari kebijakan" />
               </div>
             </div>
-            <div className="table-wrapper">
+            <div className="table-wrapper fill-scroll">
               <table>
                 <thead><tr><th>No</th><th>Nama kebijakan</th><th>Versi</th><th>Status</th><th>Tgl berlaku</th><th>Dibaca</th></tr></thead>
                 <tbody>
@@ -208,7 +205,7 @@ export default function ExecutiveDashboard() {
             </div>
           </Card>
           <div className="stack">
-            <Card title="Distribusi & read receipt" icon={MailCheck}>
+            <Card title="Distribusi & read receipt">
               <Donut
                 height={140}
                 centerValue={`${pct(rrSt['Sudah Dibaca'], readReceipts.length, 0)}%`}
@@ -218,7 +215,7 @@ export default function ExecutiveDashboard() {
               <div className="section-label" style={{ marginTop: 14 }}>Metode distribusi</div>
               <BarList items={rrMethod.map(([m, n]) => ({ label: m, value: n, href: drillHref('read-receipts', { metode: m }, { src: `Metode distribusi, ${m}` }) }))} color="#8fa2e6" />
             </Card>
-            <Card title="E-signature & persetujuan" icon={PenLine}>
+            <Card title="E-signature & persetujuan">
               <div style={{ display: 'grid', gap: 10 }}>
                 {SIGN_FLOW.map((s) => (
                   <div key={s.step} className="flex items-center gap-3">

@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  FileText, FileCheck2, FileClock, FileX2, PieChart as PieIcon, Workflow, PencilLine, Eye, Stamp, Search, Clock4,
-  Flame, Building2, Lock, Archive, Upload, FilePlus2, CheckSquare, History, LayoutTemplate,
+  FileText, FileCheck2, FileClock, FileX2, Workflow, PencilLine, Eye, Stamp, Search, Archive, Upload, FilePlus2, CheckSquare, History, LayoutTemplate,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Kpi, PageHeader, SeeAll } from '@/components/ui';
@@ -86,7 +85,7 @@ export default function EdocDashboard() {
 
         <div className="grid-3-2">
           <div className="stack">
-            <Card title="Status workflow" icon={Workflow}>
+            <Card title="Status workflow">
               <div className="flow">
                 {[
                   { s: 'Draft', icon: PencilLine, tone: 'blue', d: 'Disusun pemilik proses' },
@@ -104,7 +103,7 @@ export default function EdocDashboard() {
                 ))}
               </div>
             </Card>
-            <Card title="Dokumen terbaru" icon={Clock4} flush actions={<SeeAll href={`${href({ status: 'Aktif' })}&sort=tglTerbit&dir=desc`}>Lihat semua dokumen</SeeAll>}>
+            <Card title="Dokumen terbaru" flush actions={<SeeAll href={`${href({ status: 'Aktif' })}&sort=tglTerbit&dir=desc`}>Lihat semua dokumen</SeeAll>}>
               <div className="table-wrapper">
                 <table>
                   <thead><tr><th>No. dokumen</th><th>Nama dokumen</th><th>Kategori</th><th>Revisi</th><th>Tgl terbit</th><th>Status</th></tr></thead>
@@ -124,13 +123,13 @@ export default function EdocDashboard() {
               </div>
             </Card>
           </div>
-          <Card title="Kategori dokumen" icon={PieIcon}>
+          <Card title="Kategori dokumen">
             <Donut height={200} legend="bottom" centerLabel="Dokumen" data={DOC_CATEGORIES.map((c) => ({ name: c.key, value: cat[c.key] ?? 0, color: c.color, href: href({ kategori: c.key }, `Kategori, ${c.key}`) }))} />
           </Card>
         </div>
 
         <div className="grid-2">
-          <Card title="Pencarian & filter dokumen" icon={Search}>
+          <Card title="Pencarian & filter dokumen">
             <form onSubmit={doSearch} style={{ display: 'grid', gap: 10 }}>
               <div className="search-field" style={{ maxWidth: 'none' }}>
                 <Search aria-hidden />
@@ -143,7 +142,7 @@ export default function EdocDashboard() {
               <button type="submit" className="btn btn-primary">Cari dokumen</button>
             </form>
             <div className="section-label">Quick access</div>
-            <div className="flow" style={{ gridAutoColumns: 'minmax(100px, 1fr)' }}>
+            <div className="flow" style={{ '--flow-min': '96px' }}>
               {quick.map((x) => (
                 <Link key={x.label} href={x.href} className="flow-step" style={{ textAlign: 'center', padding: 10 }}>
                   <div className="flow-num tone-blue" style={{ margin: '0 auto 6px' }}><x.icon size={16} /></div>
@@ -152,8 +151,8 @@ export default function EdocDashboard() {
               ))}
             </div>
           </Card>
-          <Card title="Dokumen kadaluarsa & jatuh tempo review" icon={FileX2} flush actions={<SeeAll href={href({ status: 'Kadaluarsa' })} />}>
-            <div className="table-wrapper" style={{ maxHeight: 340, overflowY: 'auto' }}>
+          <Card title="Dokumen kadaluarsa & jatuh tempo review" flush actions={<SeeAll href={href({ status: 'Kadaluarsa' })} />}>
+            <div className="table-wrapper fill-scroll">
               <table>
                 <thead><tr><th>No. dokumen</th><th>Nama dokumen</th><th>Review</th><th>Status</th></tr></thead>
                 <tbody>
@@ -173,7 +172,7 @@ export default function EdocDashboard() {
         </div>
 
         <div className="grid-3-2">
-          <Card title="Dokumen per departemen" icon={Building2}>
+          <Card title="Dokumen per departemen">
             <StackedBars
               data={deptRows}
               height={280}
@@ -183,16 +182,16 @@ export default function EdocDashboard() {
             <div className="legend-inline">{DOC_CATEGORIES.map((c) => <span key={c.key}><i style={{ background: c.color }} />{c.key}</span>)}</div>
           </Card>
           <div className="stack">
-            <Card title="Dokumen populer" subtitle="Paling sering dibuka" icon={Flame}>
+            <Card title="Dokumen populer" subtitle="Paling sering dibuka">
               <BarList labelWidth={150} items={popular.map((d) => ({ label: `${d.id}, ${d.nama}`, value: d.dilihat, href: drillHref('documents', { id: d.id }, { open: d.id }) }))} color="#d4a73a" />
             </Card>
-            <Card title="Proteksi & hak akses" icon={Lock}>
+            <Card title="Proteksi & hak akses">
               <Donut height={120} centerLabel="Dokumen" data={Object.keys(ACCESS_COLORS).map((a) => ({ name: a, value: access[a] ?? 0, color: ACCESS_COLORS[a], href: href({ akses: a }, `Hak akses, ${a}`) }))} />
             </Card>
           </div>
         </div>
 
-        <Card title="Retensi & disposisi rekaman" subtitle={`${records.length} jenis rekaman mutu dengan masa simpan terdefinisi`} icon={Archive}>
+        <Card title="Retensi & disposisi rekaman" subtitle={`${records.length} jenis rekaman mutu dengan masa simpan terdefinisi`}>
           <div className="grid-2">
             <BarList items={Object.entries(countBy(records, 'retensi')).map(([k, n]) => ({ label: `Retensi ${k}`, value: n, href: drillHref('documents', { kategori: 'Rekaman', retensi: k, ...(dept && { departemen: dept }) }, { src: `Retensi ${k}` }) }))} color="#2c4aa8" />
             <BarList items={Object.entries(countBy(records, 'disposisi')).map(([k, n]) => ({ label: k, value: n, href: drillHref('documents', { kategori: 'Rekaman', disposisi: k, ...(dept && { departemen: dept }) }, { src: `Disposisi, ${k}` }) }))} color="#5f6f86" />

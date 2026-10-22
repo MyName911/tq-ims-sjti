@@ -1,4 +1,4 @@
-// Modul E, Informasi terdokumentasi (Klausul 7.5): akses, proteksi, retensi, dan disposisi.
+// Data dummy: Informasi terdokumentasi (Klausul 7.5): akses, proteksi, retensi, dan disposisi.
 import { rng, PEOPLE, TODAY, addDays, pad, daysBetween, monthOf } from './core';
 
 export const DOC_CATEGORIES = [

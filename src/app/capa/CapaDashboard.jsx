@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  FileText, Hourglass, Cog, AlertTriangle, CheckCircle2, TrendingUp, PieChart as PieIcon, GitBranch, ListChecks,
-  ClipboardCheck, MessageSquareWarning, Search as SearchIcon, Truck, ShieldAlert, Activity, Building2, ExternalLink,
+  FileText, Hourglass, Cog, AlertTriangle, CheckCircle2, ClipboardCheck, MessageSquareWarning, Search as SearchIcon, Truck, ShieldAlert, Activity, ExternalLink,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Kpi, PageHeader, Progress, Seg, SeeAll } from '@/components/ui';
@@ -79,7 +78,7 @@ export default function CapaDashboard() {
         <div className="grid-main-side">
           <div className="stack">
             <div className="grid-3-2">
-              <Card title="Tren CAPA per bulan" icon={TrendingUp}>
+              <Card title="Tren CAPA per bulan">
                 <StackedBars
                   data={trend}
                   series={CAPA_STATUSES.map((s) => ({ key: s, color: CAPA_STATUS_COLORS[s] }))}
@@ -92,7 +91,7 @@ export default function CapaDashboard() {
                   <span><i className="line" style={{ background: '#1d2c6e' }} />Total</span>
                 </div>
               </Card>
-              <Card title="Kategori CAPA" icon={PieIcon}>
+              <Card title="Kategori CAPA">
                 <Donut
                   height={170}
                   legend="bottom"
@@ -103,10 +102,10 @@ export default function CapaDashboard() {
             </div>
 
             <div className="grid-2">
-              <Card title="Top penyebab (root cause 6M)" icon={GitBranch}>
+              <Card title="Akar penyebab 6M">
                 <BarList items={ROOT_CAUSES.map((rc) => ({ label: rc, value: rootCount[rc] ?? 0, href: href({ akarPenyebab: rc }, `Root cause: ${rc}`) })).sort((a, b) => b.value - a.value)} />
               </Card>
-              <Card title="CAPA aktif per departemen" icon={Building2}>
+              <Card title="CAPA aktif per departemen">
                 <BarList color="#d4a73a" items={deptCount.slice(0, 6).map(([d, n]) => ({ label: d, value: n, href: href({ departemen: d, status: ['Open', 'On Progress', 'Overdue'] }, `CAPA aktif ${d}`) }))} />
                 {deptCount.length === 0 && <span className="muted">Tidak ada CAPA aktif.</span>}
               </Card>
@@ -114,7 +113,7 @@ export default function CapaDashboard() {
 
             <Card
               title="Daftar CAPA"
-              icon={ListChecks}
+             
               flush
               actions={<SeeAll href={href({}, 'Daftar CAPA')}>Buka tabel lengkap</SeeAll>}
             >
@@ -123,21 +122,19 @@ export default function CapaDashboard() {
               </div>
               <div className="table-wrapper" style={{ maxHeight: 430, overflowY: 'auto' }}>
                 <table>
-                  <thead><tr><th>No. CAPA</th><th>Tanggal</th><th>Kategori</th><th>Masalah</th><th>Departemen</th><th>Target</th><th>Status</th><th>Progres</th></tr></thead>
+                  <thead><tr><th>No. CAPA</th><th>Masalah</th><th>Kategori</th><th>Target</th><th>Status</th><th>Progres</th></tr></thead>
                   <tbody>
                     {list.slice(0, 40).map((r) => (
                       <tr key={r.id} className="clickable" onClick={() => setSelectedId(r.id)} style={selected?.id === r.id ? { background: 'var(--brand-50)' } : undefined}>
-                        <td className="cell-code">{r.id}</td>
-                        <td className="nowrap">{fmtDate(r.tanggal)}</td>
-                        <td><Badge value={r.kategori} plain>{r.kategori}</Badge></td>
-                        <td><div className="cell-title" style={{ maxWidth: 280 }}>{r.masalah}</div><div className="cell-sub">{r.detailAkar}</div></td>
-                        <td>{r.departemen}</td>
+                        <td><div className="cell-code">{r.id}</div><div className="cell-sub nowrap">{fmtDate(r.tanggal)}</div></td>
+                        <td><div className="cell-title">{r.masalah}</div><div className="cell-sub">{r.departemen}, {r.detailAkar}</div></td>
+                        <td><Badge value={r.kategori}>{r.kategori}</Badge></td>
                         <td className="nowrap">{fmtDate(r.target)}</td>
                         <td><Badge value={r.status} /></td>
-                        <td style={{ minWidth: 120 }}><Progress value={r.progress} /></td>
+                        <td style={{ minWidth: 104 }}><Progress value={r.progress} /></td>
                       </tr>
                     ))}
-                    {list.length === 0 && <tr><td colSpan={8} className="cell-empty">Tidak ada CAPA.</td></tr>}
+                    {list.length === 0 && <tr><td colSpan={6} className="cell-empty">Tidak ada CAPA.</td></tr>}
                   </tbody>
                 </table>
               </div>

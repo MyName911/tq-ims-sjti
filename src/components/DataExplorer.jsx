@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download, FileSpreadsheet, MousePointerClick, Search, X, ExternalLink, FilterX,
+  ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Download, FileSpreadsheet, MousePointerClick, Search, X, ExternalLink, FilterX, SlidersHorizontal,
 } from 'lucide-react';
 import AppShell from './AppShell';
 import { Card, CellValue, PageHeader, isNumericCol } from './ui';
@@ -41,6 +41,7 @@ export default function DataExplorer({ datasetKey }) {
   }, [params]);
 
   const [q, setQ] = useState(params.get('q') ?? '');
+  const [facetsOpen, setFacetsOpen] = useState(false);
   const sortKey = params.get('sort');
   const sortDir = params.get('dir') === 'asc' ? 'asc' : 'desc';
   const page = Math.max(1, Number(params.get('page') ?? 1));
@@ -175,7 +176,7 @@ export default function DataExplorer({ datasetKey }) {
         </div>
 
         <div className="explorer">
-          <aside className="facet-panel" aria-label="Filter cepat">
+          <aside className={`facet-panel ${facetsOpen ? 'open' : ''}`} id="facet-panel" aria-label="Filter cepat">
             {monthData && (
               <Card title="Per bulan">
                 <Columns data={monthData} height={150} hrefFor={(d) => {
@@ -202,6 +203,9 @@ export default function DataExplorer({ datasetKey }) {
                   <Search aria-hidden />
                   <input className="form-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Cari ${ds.singular.toLowerCase()}`} aria-label="Cari" />
                 </div>
+                <button type="button" className="btn btn-outline btn-sm facet-toggle" aria-expanded={facetsOpen} aria-controls="facet-panel" onClick={() => setFacetsOpen((v) => !v)}>
+                  <SlidersHorizontal />Filter
+                </button>
                 <div className="spacer" />
                 <span className="muted">{fmtNum(sorted.length)} baris</span>
                 {(activeFilters.length > 0 || term) && (
@@ -231,7 +235,7 @@ export default function DataExplorer({ datasetKey }) {
                       return (
                         <th
                           key={c.key}
-                          className={`${isNumericCol(c) ? 'num' : ''} ${sortable ? 'sortable' : ''} ${active ? 'sorted' : ''}`}
+                          className={`${isNumericCol(c) ? 'num' : ''} ${sortable ? 'sortable' : ''} ${active ? 'sorted' : ''} ${c.secondary ? 'col-secondary' : ''}`}
                           onClick={sortable ? () => setSort(c.key) : undefined}
                           aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                         >
@@ -249,7 +253,7 @@ export default function DataExplorer({ datasetKey }) {
                     <tr key={r.id} className="clickable" onClick={() => openRecord(r.id)}>
                       <td className="num muted">{(current - 1) * PAGE_SIZE + i + 1}</td>
                       {ds.columns.map((c) => (
-                        <td key={c.key} className={isNumericCol(c) ? 'num' : ''}><CellValue col={c} row={r} /></td>
+                        <td key={c.key} className={`${isNumericCol(c) ? 'num' : ''} ${c.secondary ? 'col-secondary' : ''}`}><CellValue col={c} row={r} /></td>
                       ))}
                     </tr>
                   ))}

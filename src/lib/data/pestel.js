@@ -1,4 +1,4 @@
-// Modul A, Konteks organisasi (Klausul 4.1) dan pihak berkepentingan (4.2).
+// Data dummy: Konteks organisasi (Klausul 4.1) dan pihak berkepentingan (4.2).
 import { rng, LAST6, PEOPLE, addDays, pad, TODAY, monthOf } from './core';
 
 export const PESTEL_FACTORS = [

@@ -33,16 +33,12 @@ export const NOTIFICATIONS = [
   nextAudit && { id: 'n8', module: 'audit', tone: 'blue', title: `Audit terjadwal: ${nextAudit.area}`, body: `${nextAudit.jenis} oleh ${nextAudit.auditor}`, time: fmtDate(nextAudit.tanggal), href: drillHref('audits', { id: nextAudit.id }, { open: nextAudit.id }) },
 ].filter(Boolean);
 
-const recentCapa = capas.filter((c) => c.status === 'Closed').sort((a, b) => (b.tglSelesai ?? '').localeCompare(a.tglSelesai ?? ''))[0];
-const recentDoc = documents.filter((d) => d.status === 'Aktif').sort((a, b) => b.tglTerbit.localeCompare(a.tglTerbit))[0];
-const recentFb = feedback.find((f) => f.rating === 5);
-const recentAudit = audits.filter((a) => a.status === 'Selesai').sort((a, b) => b.tanggal.localeCompare(a.tanggal))[0];
-const recentComm = stakeholderComms[0];
+const latest = (rows, key, n = 6) => [...rows].filter((r) => r[key]).sort((a, b) => b[key].localeCompare(a[key])).slice(0, n);
 
 export const ACTIVITIES = [
-  recentCapa && { who: recentCapa.pic, what: `menutup ${recentCapa.id}`, detail: recentCapa.masalah, when: ago(recentCapa.tglSelesai), href: drillHref('capa', { id: recentCapa.id }, { open: recentCapa.id }) },
-  recentDoc && { who: recentDoc.pemilik, what: `menerbitkan ${recentDoc.id}`, detail: recentDoc.nama, when: ago(recentDoc.tglTerbit), href: drillHref('documents', { id: recentDoc.id }, { open: recentDoc.id }) },
-  recentAudit && { who: recentAudit.auditor, what: `menyelesaikan ${recentAudit.id}`, detail: `${recentAudit.jenis}, skor ${recentAudit.skor}%`, when: ago(recentAudit.tanggal), href: drillHref('audits', { id: recentAudit.id }, { open: recentAudit.id }) },
-  recentFb && { who: recentFb.pelanggan, what: 'memberi feedback ★5', detail: recentFb.komentar, when: ago(recentFb.tanggal), href: drillHref('feedback', { id: recentFb.id }, { open: recentFb.id }) },
-  recentComm && { who: recentComm.pic, what: `mencatat ${recentComm.media.toLowerCase()}`, detail: `${recentComm.topik}, ${recentComm.stakeholder}`, when: ago(recentComm.tanggal), href: drillHref('stakeholder-comms', { id: recentComm.id }, { open: recentComm.id }) },
-].filter(Boolean);
+  ...latest(capas.filter((c) => c.status === 'Closed'), 'tglSelesai').map((c) => ({ date: c.tglSelesai, who: c.pic, what: `menutup ${c.id}`, detail: c.masalah, href: drillHref('capa', { id: c.id }, { open: c.id }) })),
+  ...latest(documents.filter((d) => d.status === 'Aktif'), 'tglTerbit').map((d) => ({ date: d.tglTerbit, who: d.pemilik, what: `menerbitkan ${d.id}`, detail: d.nama, href: drillHref('documents', { id: d.id }, { open: d.id }) })),
+  ...latest(audits.filter((x) => x.status === 'Selesai'), 'tanggal').map((x) => ({ date: x.tanggal, who: x.auditor, what: `menyelesaikan ${x.id}`, detail: `${x.jenis}, skor ${x.skor}%`, href: drillHref('audits', { id: x.id }, { open: x.id }) })),
+  ...latest(feedback.filter((f) => f.rating === 5), 'tanggal', 4).map((f) => ({ date: f.tanggal, who: f.pelanggan, what: 'memberi feedback bintang 5', detail: f.komentar, href: drillHref('feedback', { id: f.id }, { open: f.id }) })),
+  ...latest(stakeholderComms, 'tanggal').map((k) => ({ date: k.tanggal, who: k.pic, what: `mencatat ${k.media.toLowerCase()}`, detail: `${k.topik}, ${k.stakeholder}`, href: drillHref('stakeholder-comms', { id: k.id }, { open: k.id }) })),
+].sort((a, b) => b.date.localeCompare(a.date)).map((x) => ({ ...x, when: ago(x.date) }));

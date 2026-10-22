@@ -14,6 +14,8 @@ import { fmtNum } from '@/lib/data/core';
 export const SERIES = ['#3b5bdb', '#d4a73a', '#8fa2e6', '#5f6f86', '#b9c3d6', '#2c4aa8', '#a58a5a', '#1d2c6e'];
 const AXIS = { fontSize: 11.5, fill: '#636c7c' };
 const GRID = '#eceff5';
+// Grafik mengisi sisa tinggi kartu; `height` menjadi tinggi minimum.
+const FILL = { width: '100%', height: '100%', style: { position: 'absolute', inset: 0 } };
 
 export function ChartTooltip({ active, payload, label, title, unit = '', hint = 'Klik untuk lihat data detail', total }) {
   if (!active || !payload?.length) return null;
@@ -42,8 +44,8 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
   const total = data.reduce((s, d) => s + d.value, 0);
   const visible = data.filter((d) => d.value > 0);
   const chart = (
-    <div className="donut-wrap" style={{ width: legend === 'side' ? height : '100%', height, flexShrink: 0 }}>
-      <ResponsiveContainer>
+    <div className={`donut-wrap ${legend === 'side' ? '' : 'chart-fill'}`} style={legend === 'side' ? { width: height, height, flexShrink: 0 } : { minHeight: height }}>
+      <ResponsiveContainer {...FILL}>
         <PieChart>
           <Pie
             data={visible}
@@ -78,7 +80,7 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
     </div>
   );
   const rows = (
-    <div className="legend" style={{ flex: 1, minWidth: 0 }}>
+    <div className="legend" style={{ flex: '1 1 180px', minWidth: 0 }}>
       {data.map((d) => {
         const inner = (
           <>
@@ -96,9 +98,9 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
     </div>
   );
   return legend === 'side' ? (
-    <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>{chart}{rows}</div>
+    <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap', flex: 1 }}>{chart}{rows}</div>
   ) : (
-    <div style={{ display: 'grid', gap: 12 }}>{chart}{legend !== 'none' && rows}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>{chart}{legend !== 'none' && rows}</div>
   );
 }
 
@@ -110,8 +112,8 @@ export function StackedBars({ data, xKey = 'label', series, hrefFor, height = 26
   const Chart = totalLine ? ComposedChart : BarChart;
   const rows = data.map((d) => ({ ...d, __total: series.reduce((s, x) => s + (d[x.key] ?? 0), 0) }));
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer>
+    <div className="chart-fill" style={{ minHeight: height }}>
+      <ResponsiveContainer {...FILL}>
         <Chart
           data={rows}
           margin={{ top: 22, right: 8, left: 0, bottom: 0 }}
@@ -160,8 +162,8 @@ export function StackedBars({ data, xKey = 'label', series, hrefFor, height = 26
 export function TrendLines({ data, xKey = 'label', series, hrefFor, height = 250, unit = '', yDomain, yTicks, target, yWidth = 38 }) {
   const router = useRouter();
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer>
+    <div className="chart-fill" style={{ minHeight: height }}>
+      <ResponsiveContainer {...FILL}>
         <LineChart
           data={data}
           margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
@@ -221,8 +223,8 @@ export function BarList({ items, max, color = '#3b5bdb', unit = '', labelWidth }
 export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb', hrefFor, height = 180, unit = '', name = 'Jumlah' }) {
   const router = useRouter();
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer>
+    <div className="chart-fill" style={{ minHeight: height }}>
+      <ResponsiveContainer {...FILL}>
         <BarChart data={data} margin={{ top: 18, right: 4, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey={xKey} tick={AXIS} axisLine={{ stroke: GRID }} tickLine={false} interval={0} />
@@ -242,8 +244,8 @@ export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb
 export function PowerInterest({ data, height = 300, hrefFor }) {
   const router = useRouter();
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer>
+    <div className="chart-fill" style={{ minHeight: height }}>
+      <ResponsiveContainer {...FILL}>
         <ScatterChart margin={{ top: 10, right: 16, bottom: 18, left: 0 }}>
           <ReferenceArea x1={5.5} x2={10.5} y1={5.5} y2={10.5} fill="#eef1fb" fillOpacity={0.7} />
           <ReferenceArea x1={0.5} x2={5.5} y1={5.5} y2={10.5} fill="#f7f4ea" fillOpacity={0.6} />

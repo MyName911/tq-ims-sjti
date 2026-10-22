@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BarChart3, CheckCircle2, Flag, Handshake, ListTodo, Search, Target, TrendingUp, Users, Radar, MessagesSquare, Smile } from 'lucide-react';
+import { CheckCircle2, Flag, ListTodo, Search, Users, Radar } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Kpi, PageHeader, Seg, SeeAll } from '@/components/ui';
 import { BarList, Columns, Donut, PowerInterest, SERIES, StackedBars } from '@/components/charts';
@@ -67,27 +67,22 @@ export default function PestelDashboard() {
           <Kpi label="Tindakan selesai" value={byStatus.Closed ?? 0} icon={CheckCircle2} tone="mint" href={href({ status: 'Closed' }, 'KPI Tindakan selesai')} />
         </div>
 
-        <Card title="PESTEL overview" icon={BarChart3}>
+        <Card title="PESTEL overview">
           <div className="factor-grid">
-            {PESTEL_FACTORS.map((f) => {
-              const list = issues.filter((i) => i.faktor === f.key).sort((a, b) => b.skor - a.skor);
-              return (
-                <Link key={f.key} href={href({ faktor: f.key }, `PESTEL overview, ${f.key}`)} className="factor-card">
-                  <div className="factor-head">
-                    <span className="factor-letter">{f.letter}</span>
-                    <span className="factor-name">{f.label}</span>
-                  </div>
-                  <span className="factor-count">{byFactor[f.key] ?? 0}</span>
-                  <ul>{list.slice(0, 3).map((i) => <li key={i.id}>{i.isu}</li>)}</ul>
-                  <span className="factor-more">Lihat detail <ArrowRight size={13} /></span>
-                </Link>
-              );
-            })}
+            {PESTEL_FACTORS.map((f) => (
+              <Link key={f.key} href={href({ faktor: f.key }, `PESTEL overview, ${f.key}`)} className="factor-card">
+                <div className="factor-head">
+                  <span className="factor-letter">{f.letter}</span>
+                  <span className="factor-name">{f.label}</span>
+                </div>
+                <span className="factor-count">{byFactor[f.key] ?? 0}</span>
+              </Link>
+            ))}
           </div>
         </Card>
 
         <div className="grid-2">
-          <Card title="Tren isu PESTEL" icon={TrendingUp}>
+          <Card title="Tren isu PESTEL">
             <StackedBars
               data={trend}
               height={250}
@@ -98,7 +93,7 @@ export default function PestelDashboard() {
               {PESTEL_FACTORS.map((f) => <span key={f.key}><i style={{ background: f.color }} />{f.key}</span>)}
             </div>
           </Card>
-          <Card title="Isu PESTEL teratas" icon={Target} actions={<SeeAll href={href({ status: ['Prioritas', 'On Progress', 'Monitoring'] }, 'Isu aktif')} />} flush>
+          <Card title="Isu PESTEL teratas" actions={<SeeAll href={href({ status: ['Prioritas', 'On Progress', 'Monitoring'] }, 'Isu aktif')} />} flush>
             <div className="table-wrapper">
               <table>
                 <thead><tr><th>Isu</th><th>Faktor</th><th className="num">Skor</th><th>Status</th></tr></thead>
@@ -121,7 +116,7 @@ export default function PestelDashboard() {
           <Card
             title="Stakeholder portal"
            
-            icon={Handshake}
+           
             flush
             actions={<SeeAll href={drillHref('stakeholders', stkTab === 'Semua' ? {} : { tipe: stkTab })} />}
           >
@@ -133,7 +128,7 @@ export default function PestelDashboard() {
                 <input className="form-input" value={stkQ} onChange={(e) => setStkQ(e.target.value)} placeholder="Cari nama / instansi" aria-label="Cari stakeholder" />
               </div>
             </div>
-            <div className="table-wrapper" style={{ maxHeight: 360, overflowY: 'auto' }}>
+            <div className="table-wrapper fill-scroll">
               <table>
                 <thead><tr><th>Stakeholder</th><th>Kategori</th><th>Pengaruh</th><th>Kepentingan</th><th>Status komunikasi</th></tr></thead>
                 <tbody>
@@ -185,14 +180,13 @@ export default function PestelDashboard() {
               </table>
             </div>
           </Card>
-          <Card title="Issue tracking" flush actions={<SeeAll href={href(issueTab === 'Semua' ? {} : { status: issueTab })} />}>
+          <Card title="Pelacakan isu" flush actions={<SeeAll href={href(issueTab === 'Semua' ? {} : { status: issueTab })} />}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-100)' }}>
               <Seg value={issueTab} onChange={setIssueTab} options={['Semua', ...ISSUE_STATUSES].map((s) => [s, s, s === 'Semua' ? issues.length : byStatus[s] ?? 0])} />
             </div>
-            <div className="feed" style={{ maxHeight: 360, overflowY: 'auto' }}>
+            <div className="feed fill-scroll">
               {tracking.slice(0, 12).map((i) => (
                 <Link key={i.id} href={drillHref('pestel', { id: i.id }, { open: i.id })} className="feed-item">
-                  <span className="feed-icon tone-blue" style={{ fontWeight: 700, fontSize: 13 }}>{i.faktor[0]}</span>
                   <span className="feed-body"><strong>{i.isu}</strong><br />{i.pic}, target {fmtDate(i.target)}</span>
                   <Badge value={i.status} />
                 </Link>
@@ -202,14 +196,14 @@ export default function PestelDashboard() {
         </div>
 
         <div className="grid-3">
-          <Card title="Komposisi stakeholder" icon={Users}>
+          <Card title="Komposisi stakeholder">
             <Donut height={150} centerLabel="Stakeholder" data={stkCat.slice(0, 7).map(([k, n], i) => ({ name: k, value: n, color: SERIES[i], href: drillHref('stakeholders', { kategori: k }, { src: `Komposisi stakeholder, ${k}` }) }))} legend="bottom" />
           </Card>
-          <Card title="Komunikasi stakeholder" icon={MessagesSquare}>
+          <Card title="Komunikasi stakeholder">
             <Columns data={comms} height={210} color="#5f6f86" name="Interaksi" hrefFor={(d) => drillHref('stakeholder-comms', { bulan: d.bulan }, { src: `Komunikasi ${monthLabel(d.bulan)}` })} />
             <div className="muted" style={{ marginTop: 6 }}>{fmtNum(stakeholderComms.filter((c) => c.hasil === 'Perlu Tindak Lanjut').length)} interaksi perlu tindak lanjut, <Link href={drillHref('stakeholder-comms', { hasil: 'Perlu Tindak Lanjut' })}>lihat</Link></div>
           </Card>
-          <Card title="Survey kepuasan stakeholder" icon={Smile}>
+          <Card title="Survey kepuasan stakeholder">
             <BarList items={satisfaction.slice(0, 8)} max={5} color="#d4a73a" />
           </Card>
         </div>

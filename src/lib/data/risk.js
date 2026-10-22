@@ -1,4 +1,4 @@
-// Modul C, Tindakan menangani risiko & peluang (Klausul 6.1) dan sasaran mutu (6.2).
+// Data dummy: Tindakan menangani risiko & peluang (Klausul 6.1) dan sasaran mutu (6.2).
 import { rng, PEOPLE, MONTHS, TODAY, addDays, pad } from './core';
 import { pestelIssues } from './pestel';
 

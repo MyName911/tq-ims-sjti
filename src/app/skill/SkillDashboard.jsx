@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Users, Layers, UserCheck, UserCog, BadgeAlert, Grid3x3, PieChart as PieIcon, GraduationCap, BookOpen, Building2, Award, CalendarClock, Search, ExternalLink } from 'lucide-react';
+import { Users, Layers, UserCheck, UserCog, BadgeAlert, CalendarClock, Search, ExternalLink } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Badge, Card, DashFilters, Kpi, LevelCell, PageHeader, Seg, SeeAll } from '@/components/ui';
 import { BarList, Columns, Donut, StackedBars } from '@/components/charts';
@@ -76,7 +76,7 @@ export default function SkillDashboard() {
         </div>
 
         <div className="grid-main-side">
-          <Card title="Matriks keahlian per karyawan" icon={Grid3x3} flush actions={<SeeAll href={hrefE()} />}>
+          <Card title="Matriks keahlian per karyawan" flush actions={<SeeAll href={hrefE()} />}>
             <div className="toolbar" style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-100)' }}>
               <div className="search-field" style={{ maxWidth: 260 }}>
                 <Search aria-hidden />
@@ -88,12 +88,11 @@ export default function SkillDashboard() {
               <div className="spacer" />
               <span className="muted">{matrix.length} karyawan</span>
             </div>
-            <div className="table-wrapper" style={{ maxHeight: 520, overflowY: 'auto' }}>
-              <table>
+            <div className="table-wrapper fill-scroll" style={{ minHeight: 380 }}>
+              <table className="matrix-table">
                 <thead>
                   <tr>
                     <th>Nama karyawan</th>
-                    <th>Departemen</th>
                     {SKILLS.map((s) => <th key={s} className="center">{SKILL_SHORT[s]}</th>)}
                     <th className="num">Rata-rata</th>
                     <th>Status</th>
@@ -102,13 +101,7 @@ export default function SkillDashboard() {
                 <tbody>
                   {matrix.map((e) => (
                     <tr key={e.id} className="clickable" onClick={() => setSelId(e.id)} style={sel?.id === e.id ? { background: 'var(--brand-50)' } : undefined}>
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <span className="user-avatar" style={{ width: 30, height: 30, fontSize: 11 }}>{initials(e.nama)}</span>
-                          <div><div className="cell-title">{e.nama}</div><div className="cell-sub">{e.jabatan}</div></div>
-                        </div>
-                      </td>
-                      <td>{e.departemen}</td>
+                      <td><div className="cell-title">{e.nama}</div><div className="cell-sub">{e.jabatan}, {e.departemen}</div></td>
                       {e.skills.map((lv, si) => (
                         <td key={si} className="center" onClick={(ev) => ev.stopPropagation()}>
                           <span style={{ display: 'inline-block', outline: lv < e.targets[si] ? '2px solid var(--red-500)' : 'none', outlineOffset: 1, borderRadius: 8 }}>
@@ -117,7 +110,7 @@ export default function SkillDashboard() {
                         </td>
                       ))}
                       <td className="num"><b>{fmtNum(e.rataRata, 1)}</b></td>
-                      <td><Badge value={e.status} /></td>
+                      <td>{e.status === 'Kompeten' ? <Badge value="Kompeten" /> : <Badge value="Gap">Gap</Badge>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -146,25 +139,26 @@ export default function SkillDashboard() {
               <Seg value={profileTab} onChange={setProfileTab} options={[['ringkasan', 'Ringkasan'], ['pelatihan', 'Pelatihan'], ['sertifikasi', 'Sertifikasi']]} />
               <div style={{ marginTop: 12 }}>
                 {profileTab === 'ringkasan' && (
-                  <table className="table-compact">
-                    <thead><tr><th>Skill</th><th className="center">Level</th><th className="center">Target</th><th>Status</th></tr></thead>
-                    <tbody>
-                      {SKILLS.map((s, si) => (
-                        <tr key={s}>
-                          <td>{s}</td>
-                          <td className="center"><LevelCell level={sel.skills[si]} /></td>
-                          <td className="center">{sel.targets[si]}</td>
-                          <td>{sel.skills[si] >= sel.targets[si] ? <Badge value="Kompeten" /> : <Badge value="Perlu Pengembangan" />}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="table-wrapper">
+                    <table className="table-compact">
+                      <thead><tr><th>Skill</th><th className="center">Level</th><th className="center">Target</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {SKILLS.map((s, si) => (
+                          <tr key={s}>
+                            <td>{s}</td>
+                            <td className="center"><LevelCell level={sel.skills[si]} /></td>
+                            <td className="center">{sel.targets[si]}</td>
+                            <td>{sel.skills[si] >= sel.targets[si] ? <Badge value="Kompeten" /> : <Badge value="Gap">Gap</Badge>}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 {profileTab === 'pelatihan' && (
                   <div className="feed">
                     {trainings.filter((t) => t.empId === sel.id).map((t) => (
                       <Link key={t.id} href={drillHref('trainings', { id: t.id }, { open: t.id })} className="feed-item" style={{ padding: '9px 4px' }}>
-                        <span className="feed-icon tone-blue"><GraduationCap /></span>
                         <span className="feed-body"><strong>{t.program}</strong><br />{t.metode}, {t.jam} jam, {fmtDate(t.tanggal)}</span>
                         <Badge value={t.status} />
                       </Link>
@@ -176,7 +170,6 @@ export default function SkillDashboard() {
                   <div className="feed">
                     {certifications.filter((c) => c.empId === sel.id).map((c) => (
                       <Link key={c.id} href={drillHref('certifications', { id: c.id }, { open: c.id })} className="feed-item" style={{ padding: '9px 4px' }}>
-                        <span className="feed-icon tone-mint"><Award /></span>
                         <span className="feed-body"><strong>{c.sertifikasi}</strong><br />Berlaku s.d. {fmtDate(c.kadaluarsa)}</span>
                         <Badge value={c.status} />
                       </Link>
@@ -190,17 +183,16 @@ export default function SkillDashboard() {
         </div>
 
         <div className="grid-3">
-          <Card title="Distribusi level kompetensi" icon={PieIcon}>
+          <Card title="Distribusi level kompetensi">
             <Donut height={150} centerLabel="Karyawan" legend="bottom" data={LEVELS.map((l) => ({ name: l.label, value: lvl[l.level] ?? 0, color: l.color, href: hrefE({ levelKeseluruhan: l.level }, `Distribusi ${l.label}`) }))} />
           </Card>
-          <Card title="Kebutuhan pelatihan per skill" icon={GraduationCap}>
+          <Card title="Kebutuhan pelatihan per skill">
             <BarList items={gapBySkill.map(({ s, n }) => ({ label: s, value: n, href: hrefS({ skill: s, status: 'Gap' }, `Kebutuhan pelatihan, ${s}`) })).sort((a, b) => b.value - a.value)} />
           </Card>
-          <Card title="Rekomendasi pelatihan" icon={BookOpen} flush>
+          <Card title="Rekomendasi pelatihan" flush>
             <div className="feed">
               {recs.slice(0, 5).map((r) => (
                 <Link key={r.p} href={drillHref('trainings', { program: r.p, status: ['Terjadwal', 'Berjalan'], ...(dept && { departemen: dept }) }, { src: `Rekomendasi, ${r.p}` })} className="feed-item">
-                  <span className="feed-icon tone-peach"><BookOpen /></span>
                   <span className="feed-body"><strong>{r.p}</strong><br />Untuk {r.n} karyawan, {r.jam} jam, {r.metode}</span>
                 </Link>
               ))}
@@ -209,7 +201,7 @@ export default function SkillDashboard() {
         </div>
 
         <div className="grid-3">
-          <Card title="Kompetensi per departemen" icon={Building2} style={{ gridColumn: 'span 2' }}>
+          <Card title="Kompetensi per departemen" style={{ gridColumn: 'span 2' }}>
             <StackedBars
               data={byDept}
               height={250}
@@ -218,7 +210,7 @@ export default function SkillDashboard() {
             />
             <div className="legend-inline"><span><i style={{ background: '#2f8a5f' }} />Kompeten</span><span><i style={{ background: '#d08a4a' }} />Perlu pengembangan</span></div>
           </Card>
-          <Card title="Status sertifikasi" icon={Award}>
+          <Card title="Status sertifikasi">
             <Donut height={140} centerLabel="Sertifikat" data={Object.keys(CERT_COLORS).map((s) => ({ name: s, value: certSt[s] ?? 0, color: CERT_COLORS[s], href: drillHref('certifications', { status: s, ...(dept && { departemen: dept }) }, { src: `Status sertifikasi, ${s}` }) }))} />
           </Card>
         </div>

@@ -103,7 +103,7 @@ export const MODULES = [
     clause: 'Klausul 4-10',
     clauseDetail: 'Integrasi seluruh modul: satu data, satu sistem, satu tujuan',
     tagline: 'Quality, Risk, People, Process, Performance',
-    description: 'Pusat kendali yang menyatukan modul A-G: KPI lintas modul, notifikasi, to-do, dan peta proses bisnis.',
+    description: 'Pusat kendali yang menyatukan seluruh sistem: KPI lintas modul, notifikasi, to-do, dan peta proses bisnis.',
     pdca: 'PDCA',
     featured: true,
     datasets: [],
