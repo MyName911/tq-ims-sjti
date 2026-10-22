@@ -8,7 +8,6 @@ export const metadata = {
   description: 'Referensi dashboard dan sistem digital ISO 9001:2026 oleh Total Quality Indonesia, studi kasus fiktif dengan data dummy.',
   applicationName: 'ISO 9001:2026 Digital System',
   robots: { index: false, follow: false },
-  icons: { icon: '/brand/tq-logo.png' },
 };
 
 export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#ffffff' };
