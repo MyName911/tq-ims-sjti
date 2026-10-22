@@ -20,7 +20,7 @@ export default function Hub() {
         <HubGrid />
       </main>
 
-      <footer className="hub-foot">© 2026 {CONSULTANT.name}, data dummy</footer>
+      <footer className="hub-foot">© 2026 {CONSULTANT.name}</footer>
     </div>
   );
 }
