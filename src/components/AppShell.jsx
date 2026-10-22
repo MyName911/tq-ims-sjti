@@ -9,6 +9,7 @@ import { MODULES, moduleById } from '@/lib/modules';
 import { DATASETS, drillHref } from '@/lib/datasets';
 import { NOTIFICATIONS } from '@/lib/activity';
 import { COMPANY, CONSULTANT, DEMO_USER, TODAY, MONTH_FULL } from '@/lib/data/core';
+import { SIDEBAR_INTRO_KEY } from '@/lib/ui-state';
 
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const todayLabel = () => {
@@ -25,6 +26,25 @@ export default function AppShell({ moduleId, datasetKey, title, subtitle, childr
     setOpenedAt(pathname);
     if (open) setOpen(false);
   }
+
+  // Dibuka dari halaman main: sidebar terlihat sebentar, lalu bergeser keluar
+  // supaya dashboard tampil penuh tetapi pengguna tahu sidebar tersedia.
+  useEffect(() => {
+    let intro = null;
+    try { intro = sessionStorage.getItem(SIDEBAR_INTRO_KEY); } catch { /* mode privat */ }
+    if (!intro || !window.matchMedia('(min-width: 1024px)').matches) return;
+    const root = document.documentElement;
+    root.dataset.sidebarInstant = '';
+    delete root.dataset.sidebar;
+    const raf = requestAnimationFrame(() => requestAnimationFrame(() => { delete root.dataset.sidebarInstant; }));
+    const timer = setTimeout(() => {
+      try { sessionStorage.removeItem(SIDEBAR_INTRO_KEY); } catch { /* mode privat */ }
+      delete root.dataset.sidebarInstant;
+      root.dataset.sidebar = 'hidden';
+    }, 900);
+    return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
+  }, []);
+
   return (
     <div className="app-layout">
       <Sidebar moduleId={moduleId} datasetKey={datasetKey} open={open} onClose={() => setOpen(false)} />
