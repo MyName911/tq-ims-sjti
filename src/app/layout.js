@@ -4,9 +4,9 @@ import './globals.css';
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap', axes: ['opsz'] });
 
 export const metadata = {
-  title: { default: 'ISO 9001:2026 Digital System | Total Quality', template: '%s | ISO 9001:2026 Digital System' },
-  description: 'Referensi dashboard dan sistem digital ISO 9001:2026 oleh Total Quality Indonesia, studi kasus fiktif dengan data dummy.',
-  applicationName: 'ISO 9001:2026 Digital System',
+  title: { default: 'IMS Digital System | PT Safarijunie Textindo', template: '%s | IMS Digital System' },
+  description: 'Sistem manajemen mutu digital ISO 9001:2026 PT Safarijunie Textindo — dashboard terintegrasi untuk monitoring kualitas, risiko, audit, dan CAPA.',
+  applicationName: 'IMS Digital System — PT Safarijunie Textindo',
   robots: { index: false, follow: false },
 };
 

@@ -7,10 +7,10 @@ export default function Hub() {
     <div className="hub">
       <header className="hub-top">
         <div className="hub-brand">
-          <Image src="/brand/tq-logo.png" alt="Logo Total Quality" width={60} height={34} priority />
+          <Image src="/brand/sj-logo.png" alt="Logo PT Safarijunie Textindo" width={60} height={60} priority style={{ objectFit: 'contain' }} />
           <div>
-            <strong>{CONSULTANT.name}</strong>
-            <span>{COMPANY.name}</span>
+            <strong>{COMPANY.name}</strong>
+            <span>IMS Digital System</span>
           </div>
         </div>
       </header>
@@ -20,7 +20,7 @@ export default function Hub() {
         <HubGrid />
       </main>
 
-      <footer className="hub-foot">© 2026 {CONSULTANT.name}</footer>
+      <footer className="hub-foot">© 2026 {COMPANY.name} · Powered by {CONSULTANT.name}</footer>
     </div>
   );
 }

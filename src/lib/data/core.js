@@ -3,12 +3,12 @@
 // browser, jadi angka di grafik selalu sama dengan isi tabel detailnya.
 
 export const COMPANY = {
-  name: 'PT Sinar Busana Nusantara',
-  short: 'SBN',
-  industry: 'Garment Manufacturing',
-  tagline: 'Export Quality Apparel',
-  location: 'Majalengka, Jawa Barat',
-  products: 'Kemeja, celana, dan outerwear untuk pasar ekspor',
+  name: 'PT Safarijunie Textindo',
+  short: 'SJT',
+  industry: 'Textile Manufacturing',
+  tagline: 'Quality Textile for Global Market',
+  location: 'Jawa Barat, Indonesia',
+  products: 'Produk tekstil berkualitas untuk pasar domestik dan ekspor',
   employees: 1284,
 };
 

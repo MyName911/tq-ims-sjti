@@ -55,8 +55,8 @@ export default function AppShell({ moduleId, datasetKey, title, subtitle, childr
         <Header title={title} subtitle={subtitle} onMenu={() => setOpen(true)} />
         <main id="main-content" className="page-container page-enter">{children}</main>
         <footer className="app-footer no-print">
-          <span>© 2026 {CONSULTANT.name}</span>
-          <span>{COMPANY.name}</span>
+          <span>© 2026 {COMPANY.name}</span>
+          <span>Powered by {CONSULTANT.name}</span>
         </footer>
       </div>
     </div>
@@ -68,10 +68,10 @@ function Sidebar({ moduleId, datasetKey, open, onClose }) {
     <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Navigasi utama">
       <div className="sidebar-logo">
         <Link href="/">
-          <Image src="/brand/tq-logo.png" alt="Logo Total Quality" width={58} height={34} priority />
+          <Image src="/brand/sj-logo.png" alt="Logo PT Safarijunie Textindo" width={44} height={44} priority style={{ objectFit: 'contain' }} />
           <span className="sidebar-logo-text">
-            <span className="sidebar-logo-name">ISO 9001:2026</span>
-            <span className="sidebar-logo-sub">Digital System</span>
+            <span className="sidebar-logo-name">Safarijunie</span>
+            <span className="sidebar-logo-sub">IMS Digital System</span>
           </span>
         </Link>
         <button type="button" className="sidebar-close" onClick={onClose} aria-label="Tutup navigasi"><X size={20} /></button>
