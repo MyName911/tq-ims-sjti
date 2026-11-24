@@ -10,7 +10,7 @@ export const DOC_CATEGORIES = [
   { key: 'Dokumen Eksternal', code: 'EXT', color: '#2c4aa8' },
 ];
 
-const DEPT_CODE = {
+export const DEPT_CODE = {
   Cutting: 'CUT', Sewing: 'SEW', Finishing: 'FNS', 'Quality Control': 'QC', Warehouse: 'WH', PPIC: 'PPC',
   Maintenance: 'MTC', Merchandising: 'MD', Purchasing: 'PUR', 'HR & GA': 'HRG', IT: 'IT', Finance: 'FA', QMR: 'QMR',
 };

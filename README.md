@@ -18,31 +18,39 @@ Studi kasus fiktif **PT Sinar Busana Nusantara** (pabrik garmen ekspor). Semua d
 
 Halaman `/` adalah hub "ISO 9001:2026 Digital System" (wireframe PDF main): satu kotak per sistem.
 
+## Struktur halaman
+
+- `/` : hub, satu kotak per sistem.
+- `/<sistem>` : Ringkasan sistem (4 KPI, 2 grafik utama, kartu sub-modul).
+- `/<sistem>/<sub-modul>` : satu sub-modul, misalnya `/capa/capa`, `/risk/okr`, `/skill/trainings`.
+  Berisi KPI, 2-3 grafik, form tambah data, dan tabel. Alamat lama `/data/<dataset>` dialihkan otomatis.
+- `/ims` : IMS 360°, status tiap sistem, daftar "Perlu tindakan", input cepat, tren KPI.
+
 ## Interaksi
 
-- **Drill-down**: setiap kartu KPI, irisan donut, segmen batang, titik tren, sel heatmap, dan baris bar
-  membuka `/data/<dataset>?<field>=<nilai>` — tabel detail yang sudah terfilter.
-- **Halaman detail**: pencarian, sortir kolom, filter facet (dengan jumlah), grafik sebaran per bulan,
-  paginasi, export Excel/CSV, dan drawer detail baris dengan tautan ke data terkait
-  (temuan → CAPA, karyawan → pelatihan, isu PESTEL → risiko).
-- **Filter dashboard**: tiap modul punya filter (departemen, kategori, periode) yang mengubah semua widget
-  sekaligus, dan tautan drill-down ikut membawa filter tersebut.
-- **Pencarian global**: `Ctrl+K` mencari kode/judul di seluruh dataset.
+- **Input data (mode pratinjau)**: tombol "Tambah" di setiap sub-modul membuka form di atas tabel.
+  Data juga bisa diubah dan dihapus dari panel detail. Semua perubahan disimpan di localStorage browser
+  (`tq-ims:data:v1`), tidak ke server, dan langsung memengaruhi KPI, grafik, dan IMS 360°.
+  Tombol "Reset" mengembalikan sub-modul ke data awal.
+- **Grafik sebagai filter**: klik batang, irisan donut, sel heatmap, atau titik tren untuk memfilter tabel
+  di halaman yang sama. Klik lagi untuk membatalkan. Di halaman Ringkasan, klik membuka sub-modulnya.
+- **Filter lanjutan**: pencarian, pilihan ganda per kolom (dengan jumlah data), rentang tanggal/angka,
+  chip filter aktif, pilihan kolom, baris per halaman, sortir, dan export Excel/CSV. Filter tersimpan di URL.
+- **Pencarian global**: `Ctrl+K` mencari kode/judul di seluruh data, termasuk data yang baru diinput.
 
-## Struktur
+## Struktur kode
 
 ```
-src/lib/data/*.js     Generator data dummy ber-seed (hasil selalu sama di server & browser)
-src/lib/datasets.js   Registry dataset: kolom, facet, ringkasan, relasi — dipakai semua drill-down
-src/lib/modules.js    Daftar modul A–H
-src/components/       AppShell, kit UI, grafik yang bisa diklik (Recharts), DataExplorer
-src/app/<modul>/      Dashboard per modul
-src/app/data/[dataset]  Halaman data detail
+src/lib/data/*.js       Generator data dummy ber-seed
+src/lib/datasets.js     Registry dataset: kolom, facet, ringkasan, relasi, filter
+src/lib/submodules.js   Nama, ikon, dan grafik tiap sub-modul
+src/lib/forms.js        Field form input dan perhitungan kolom turunan
+src/lib/store.js        Penyimpanan cache browser (tambah/ubah/hapus/reset)
+src/lib/overviews.js    KPI & grafik halaman Ringkasan tiap sistem
+src/components/         AppShell, SubModulePage, ModuleOverview, ImsOverview, ChartPanel, FilterPanel, RecordForm
 ```
 
-Angka di grafik dihitung dari baris yang sama dengan yang ditampilkan di tabel detail, jadi selalu cocok.
-Untuk menyambungkan ke data asli, ganti isi `src/lib/data/*.js` dengan hasil API/database
-dengan bentuk baris yang sama.
+Untuk menyambungkan ke database, ganti `src/lib/store.js` dengan pemanggilan API dengan bentuk baris yang sama.
 
 ## Menjalankan
 

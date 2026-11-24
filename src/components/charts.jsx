@@ -61,11 +61,11 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
             isAnimationActive
             onMouseEnter={(_, i) => setHover(visible[i]?.name)}
             onMouseLeave={() => setHover(null)}
-            onClick={(d) => d?.href && router.push(d.href)}
+            onClick={(d) => { const item = visible.find((x) => x.name === d?.name) ?? d; if (item?.onClick) item.onClick(); else if (item?.href) router.push(item.href); }}
             style={{ cursor: 'pointer' }}
           >
             {visible.map((d) => (
-              <Cell key={d.name} fill={d.color} opacity={hover && hover !== d.name ? 0.35 : 1} style={{ transition: 'opacity 150ms', outline: 'none' }} />
+              <Cell key={d.name} fill={d.color} opacity={(hover && hover !== d.name) || d.dim ? 0.3 : 1} style={{ transition: 'opacity 150ms', outline: 'none' }} />
             ))}
           </Pie>
           <Tooltip content={<ChartTooltip />} wrapperStyle={{ zIndex: 10 }} />
@@ -90,7 +90,10 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
             {showPct && <span className="pct">{total ? fmtNum((d.value / total) * 100, 1) : 0}%</span>}
           </>
         );
-        const cls = `legend-row ${hover === d.name ? 'hover' : ''}`;
+        const cls = `legend-row ${hover === d.name || d.active ? 'hover' : ''} ${d.dim ? 'dim' : ''}`;
+        if (d.onClick) {
+          return <button key={d.name} type="button" className={cls} aria-pressed={!!d.active} onClick={d.onClick} onMouseEnter={() => setHover(d.name)} onMouseLeave={() => setHover(null)}>{inner}</button>;
+        }
         return d.href ? (
           <Link key={d.name} href={d.href} className={cls} onMouseEnter={() => setHover(d.name)} onMouseLeave={() => setHover(null)}>{inner}</Link>
         ) : <div key={d.name} className={cls}>{inner}</div>;
@@ -106,9 +109,9 @@ export function Donut({ data, height = 200, centerValue, centerLabel, legend = '
 
 // ─── Kolom bertumpuk per periode ───────────────────────────────────────────
 // series: [{ key, label, color }]. hrefFor(row, seriesKey|null) menghasilkan URL detail.
-export function StackedBars({ data, xKey = 'label', series, hrefFor, height = 260, totalLine, stacked = true, unit = '', showTotalLabel = true, yWidth = 34 }) {
+export function StackedBars({ data, xKey = 'label', series, hrefFor, onPick, height = 260, totalLine, stacked = true, unit = '', showTotalLabel = true, yWidth = 34 }) {
   const router = useRouter();
-  const go = (row, key) => { const h = hrefFor?.(row, key); if (h) router.push(h); };
+  const go = (row, key) => { if (onPick) return onPick(row, key); const h = hrefFor?.(row, key); if (h) router.push(h); };
   const Chart = totalLine ? ComposedChart : BarChart;
   const rows = data.map((d) => ({ ...d, __total: series.reduce((s, x) => s + (d[x.key] ?? 0), 0) }));
   return (
@@ -159,7 +162,7 @@ export function StackedBars({ data, xKey = 'label', series, hrefFor, height = 26
 }
 
 // ─── Garis tren ────────────────────────────────────────────────────────────
-export function TrendLines({ data, xKey = 'label', series, hrefFor, height = 250, unit = '', yDomain, yTicks, target, yWidth = 38 }) {
+export function TrendLines({ data, xKey = 'label', series, hrefFor, onPick, height = 250, unit = '', yDomain, yTicks, target, yWidth = 38 }) {
   const router = useRouter();
   return (
     <div className="chart-fill" style={{ minHeight: height }}>
@@ -169,15 +172,17 @@ export function TrendLines({ data, xKey = 'label', series, hrefFor, height = 250
           margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
           onClick={(s) => {
             const i = Number(s?.activeTooltipIndex ?? s?.activeIndex);
-            const h = !Number.isNaN(i) && data[i] ? hrefFor?.(data[i]) : null;
+            if (Number.isNaN(i) || !data[i]) return;
+            if (onPick) return onPick(data[i]);
+            const h = hrefFor?.(data[i]);
             if (h) router.push(h);
           }}
-          style={{ cursor: hrefFor ? 'pointer' : 'default' }}
+          style={{ cursor: hrefFor || onPick ? 'pointer' : 'default' }}
         >
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey={xKey} tick={AXIS} axisLine={{ stroke: GRID }} tickLine={false} />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} width={yWidth} domain={yDomain ?? ['auto', 'auto']} ticks={yTicks} tickFormatter={(v) => `${fmtNum(v)}${unit}`} />
-          <Tooltip content={<ChartTooltip unit={unit} hint={hrefFor ? 'Klik untuk lihat data bulan ini' : null} />} cursor={{ stroke: '#b4c0ef', strokeWidth: 1 }} />
+          <Tooltip content={<ChartTooltip unit={unit} hint={hrefFor || onPick ? 'Klik untuk lihat data bulan ini' : null} />} cursor={{ stroke: '#b4c0ef', strokeWidth: 1 }} />
           {target != null && <ReferenceLine y={target} stroke="#8790a0" strokeDasharray="4 4" label={{ value: `Target ${target}${unit}`, position: 'insideTopRight', fontSize: 11, fill: '#636c7c' }} />}
           {series.map((s) => (
             <Line
@@ -211,6 +216,8 @@ export function BarList({ items, max, color = '#3b5bdb', unit = '', labelWidth }
           </>
         );
         const style = labelWidth ? { gridTemplateColumns: `${labelWidth}px 1fr auto` } : undefined;
+        const cls = `barlist-row ${it.active ? 'active' : ''} ${it.dim ? 'dim' : ''}`;
+        if (it.onClick) return <button key={it.label} type="button" className={cls} style={style} aria-pressed={!!it.active} onClick={it.onClick}>{inner}</button>;
         return it.href
           ? <Link key={it.label} href={it.href} className="barlist-row" style={style} title={`${it.label}: klik untuk detail`}>{inner}</Link>
           : <div key={it.label} className="barlist-row" style={style}>{inner}</div>;
@@ -220,7 +227,7 @@ export function BarList({ items, max, color = '#3b5bdb', unit = '', labelWidth }
 }
 
 // ─── Kolom sederhana satu seri ─────────────────────────────────────────────
-export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb', hrefFor, height = 180, unit = '', name = 'Jumlah' }) {
+export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb', hrefFor, onPick, height = 180, unit = '', name = 'Jumlah' }) {
   const router = useRouter();
   return (
     <div className="chart-fill" style={{ minHeight: height }}>
@@ -230,7 +237,7 @@ export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb
           <XAxis dataKey={xKey} tick={AXIS} axisLine={{ stroke: GRID }} tickLine={false} interval={0} />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
           <Tooltip content={<ChartTooltip unit={unit} hint={hrefFor ? 'Klik untuk lihat data detail' : null} />} cursor={{ fill: 'rgb(76 110 245 / 0.06)' }} />
-          <Bar dataKey={yKey} name={name} fill={color} radius={[4, 4, 0, 0]} maxBarSize={24} onClick={(e) => { const h = hrefFor?.(e.payload ?? e); if (h) router.push(h); }} style={{ cursor: hrefFor ? 'pointer' : 'default' }}>
+          <Bar dataKey={yKey} name={name} fill={color} radius={[4, 4, 0, 0]} maxBarSize={24} onClick={(e) => { if (onPick) return onPick(e.payload ?? e); const h = hrefFor?.(e.payload ?? e); if (h) router.push(h); }} style={{ cursor: hrefFor || onPick ? 'pointer' : 'default' }}>
             {data.map((d, i) => <Cell key={i} fill={d.color ?? color} />)}
             <LabelList dataKey={yKey} position="top" style={{ fontSize: 11, fontWeight: 600, fill: '#394150' }} />
           </Bar>
@@ -241,7 +248,7 @@ export function Columns({ data, xKey = 'label', yKey = 'value', color = '#3b5bdb
 }
 
 // ─── Matriks pengaruh-kepentingan stakeholder ──────────────────────────────
-export function PowerInterest({ data, height = 300, hrefFor }) {
+export function PowerInterest({ data, height = 300, hrefFor, onPick }) {
   const router = useRouter();
   return (
     <div className="chart-fill" style={{ minHeight: height }}>
@@ -271,7 +278,7 @@ export function PowerInterest({ data, height = 300, hrefFor }) {
               );
             }}
           />
-          <Scatter data={data} onClick={(e) => { const h = hrefFor?.(e.payload ?? e); if (h) router.push(h); }} style={{ cursor: 'pointer' }}>
+          <Scatter data={data} onClick={(e) => { if (onPick) return onPick(e.payload ?? e); const h = hrefFor?.(e.payload ?? e); if (h) router.push(h); }} style={{ cursor: 'pointer' }}>
             {data.map((d) => <Cell key={d.id} fill={d.tipe === 'Internal' ? '#3b5bdb' : '#d4a73a'} stroke="#fff" strokeWidth={2} />)}
           </Scatter>
         </ScatterChart>

@@ -4,7 +4,7 @@
 import { pestelIssues, stakeholders, stakeholderComms } from './data/pestel';
 import { kpis, kpiMonthly, policies, readReceipts } from './data/executive';
 import { risks, okrs } from './data/risk';
-import { employees, skillScores, trainings, certifications, SKILLS } from './data/skill';
+import { employees, skillScores, scoresOf, trainings, certifications, SKILLS } from './data/skill';
 import { documents } from './data/documents';
 import { audits, findings, feedback } from './data/audit';
 import { capas } from './data/capa';
@@ -313,7 +313,7 @@ export const DATASETS = {
       { key: 'nama', label: 'Karyawan', type: 'title', sub: 'jabatan' },
       { key: 'departemen', label: 'Departemen' },
       { key: 'skills', label: 'Teknis, Mutu, K3, Digital, Leader, PS', type: 'skills' },
-      { key: 'rataRata', label: 'Rata-rata', type: 'num', decimals: 1 },
+      { key: 'rataRata', label: 'Rata-rata', type: 'num', decimals: 1, secondary: true },
       { key: 'levelKeseluruhan', label: 'Level', type: 'level' },
       { key: 'status', label: 'Status', type: 'badge' },
     ],
@@ -342,6 +342,7 @@ export const DATASETS = {
     module: 'skill',
     description: 'Setiap baris adalah satu kompetensi satu karyawan, dibandingkan dengan level target jabatannya.',
     rows: skillScores,
+    derive: { from: 'employees', build: scoresOf },
     titleKey: 'karyawan',
     searchKeys: ['karyawan', 'jabatan', 'skill', 'departemen'],
     facets: ['skill', 'status', 'level', 'departemen', 'golongan'],
@@ -602,6 +603,9 @@ export const DATASETS = {
 };
 
 export const datasetKeys = Object.keys(DATASETS);
+// Kata benda untuk kalimat: huruf pertama kecil, singkatan tetap kapital.
+export const nounOf = (ds) => (/^[A-Z]{2,}/.test(ds.singular) ? ds.singular : ds.singular.charAt(0).toLowerCase() + ds.singular.slice(1));
+
 
 // Label manusiawi untuk kunci filter (chip filter aktif & panel facet).
 const LABEL_OVERRIDES = {
@@ -632,15 +636,48 @@ export function drillHref(dataset, filters = {}, opts = {}) {
   if (opts.src) p.set('src', opts.src);
   if (opts.open) p.set('open', opts.open);
   const qs = p.toString();
-  return `/data/${dataset}${qs ? '?' + qs : ''}`;
+  return `/${DATASETS[dataset].module}/${dataset}${qs ? '?' + qs : ''}`;
 }
 
-export const RESERVED_PARAMS = ['q', 'from', 'src', 'open', 'sort', 'dir', 'page'];
+export const RESERVED_PARAMS = ['q', 'from', 'src', 'open', 'sort', 'dir', 'page', 'size', 'new'];
 
 export function applyFilters(rows, filters) {
   const entries = Object.entries(filters);
   if (!entries.length) return rows;
   return rows.filter((r) => entries.every(([k, vals]) => vals.includes(String(r[k]))));
+}
+
+// Filter dari URL: kategori `field=a,b`, rentang `field.from` / `field.to`.
+export function parseFilters(params) {
+  const cat = {};
+  const range = {};
+  for (const [k, v] of params.entries()) {
+    if (RESERVED_PARAMS.includes(k) || !v) continue;
+    const m = k.match(/^(.+)\.(from|to)$/);
+    if (m) range[m[1]] = { ...range[m[1]], [m[2]]: v };
+    else cat[k] = v.split(',');
+  }
+  return { cat, range };
+}
+
+export function applyRanges(rows, ranges) {
+  const entries = Object.entries(ranges);
+  if (!entries.length) return rows;
+  return rows.filter((r) => entries.every(([k, { from, to }]) => {
+    const v = r[k];
+    if (v == null || v === '') return false;
+    const numeric = typeof v === 'number';
+    const val = numeric ? v : String(v);
+    if (from != null && from !== '' && val < (numeric ? Number(from) : from)) return false;
+    if (to != null && to !== '' && val > (numeric ? Number(to) : to)) return false;
+    return true;
+  }));
+}
+
+// Kolom yang bisa difilter dengan rentang (tanggal / angka).
+export function rangeFields(ds) {
+  return [...ds.columns, ...(ds.extra ?? [])].filter((c) => ['date', 'num', 'pct', 'progress'].includes(c.type))
+    .filter((c, i, arr) => arr.findIndex((x) => x.key === c.key) === i);
 }
 
 export function facetCounts(rows, key) {

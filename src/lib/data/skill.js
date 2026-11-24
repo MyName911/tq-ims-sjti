@@ -30,7 +30,7 @@ const STRUCTURE = [
 ];
 
 // Level minimum per golongan jabatan, urutan sesuai SKILLS.
-const TARGETS = {
+export const TARGETS = {
   op: [3, 3, 3, 2, 2, 2],
   lead: [3, 3, 3, 3, 3, 3],
   staff: [3, 3, 3, 3, 2, 3],
@@ -102,7 +102,8 @@ function buildEmployees() {
 
 export const employees = buildEmployees();
 
-export const skillScores = employees.flatMap((e) => SKILLS.map((skill, si) => ({
+// Satu baris per kompetensi per karyawan; dihitung ulang saat data karyawan berubah.
+export const scoresOf = (emps) => emps.flatMap((e) => SKILLS.map((skill, si) => ({
   id: `${e.id}-S${si + 1}`,
   karyawan: e.nama,
   empId: e.id,
@@ -115,6 +116,8 @@ export const skillScores = employees.flatMap((e) => SKILLS.map((skill, si) => ({
   selisih: e.skills[si] - e.targets[si],
   status: e.skills[si] < e.targets[si] ? 'Gap' : 'Kompeten',
 })));
+
+export const skillScores = scoresOf(employees);
 
 // [program, skill, metode, jam]
 export const PROGRAMS = [
@@ -175,7 +178,7 @@ function buildTrainings() {
 export const trainings = buildTrainings();
 
 // [sertifikasi, penerbit, masa berlaku (tahun), golongan yang relevan]
-const CERTS = [
+export const CERTS = [
   ['ISO 9001:2026 Internal Auditor', 'Total Quality Indonesia', 3, ['Supervisor', 'Manager', 'Staff']],
   ['Ahli K3 Umum', 'Kemnaker RI', 3, ['Supervisor', 'Manager']],
   ['Operator Forklift (SIO)', 'Kemnaker RI', 5, ['Operator']],

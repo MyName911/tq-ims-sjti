@@ -10,6 +10,8 @@ import { DATASETS, drillHref } from '@/lib/datasets';
 import { NOTIFICATIONS } from '@/lib/activity';
 import { COMPANY, CONSULTANT, DEMO_USER, TODAY, MONTH_FULL } from '@/lib/data/core';
 import { SIDEBAR_INTRO_KEY } from '@/lib/ui-state';
+import { SUBMODULES } from '@/lib/submodules';
+import { combine, useStore } from '@/lib/store';
 
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const todayLabel = () => {
@@ -95,7 +97,7 @@ function Sidebar({ moduleId, datasetKey, open, onClose }) {
                   <div className="nav-sub">
                     {m.datasets.map((k) => (
                       <Link key={k} href={drillHref(k)} className={`nav-subitem ${datasetKey === k ? 'active' : ''}`} aria-current={datasetKey === k ? 'page' : undefined}>
-                        {DATASETS[k].title}
+                        {SUBMODULES[k].short}
                       </Link>
                     ))}
                   </div>
@@ -110,16 +112,18 @@ function Sidebar({ moduleId, datasetKey, open, onClose }) {
 }
 
 // Indeks pencarian global: kode & judul setiap baris di semua dataset.
+// Termasuk data yang ditambahkan atau diubah pengguna di browser ini.
 function useSearchIndex() {
-  return useMemo(() => Object.entries(DATASETS).flatMap(([key, ds]) => ds.rows.map((r) => ({
+  const st = useStore();
+  return useMemo(() => Object.entries(DATASETS).flatMap(([key, ds]) => combine(key, st).map((r) => ({
     key,
     id: r.id,
     code: r.kode ?? r.id,
     title: String(r[ds.titleKey] ?? ''),
-    dataset: ds.title,
+    dataset: SUBMODULES[key].short,
     module: moduleById(ds.module),
     hay: `${r.id} ${r.kode ?? ''} ${r[ds.titleKey] ?? ''}`.toLowerCase(),
-  }))), []);
+  }))), [st]);
 }
 
 function GlobalSearch() {
