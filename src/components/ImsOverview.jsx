@@ -10,36 +10,29 @@ import { Badge, Breadcrumb, Card, Seg } from './ui';
 import { MODULES, moduleById } from '@/lib/modules';
 import { chartOf } from '@/lib/submodules';
 import { drillHref } from '@/lib/datasets';
-import { ACTIVITIES } from '@/lib/activity';
+import { activitiesOf } from '@/lib/activity';
+import { PRIORITY_RISK_LEVELS } from '@/lib/data/risk';
 import { combine, useStore } from '@/lib/store';
-import { TODAY, daysBetween, fmtDate, pct } from '@/lib/data/core';
+import { COMPANY, PROCESS_GROUPS, TODAY, daysBetween, fmtDate } from '@/lib/data/core';
 
-const count = (rows, f) => rows.filter(f).length;
-
-// Satu angka kunci + status per sistem.
 function health(get) {
   const kpi = get('kpi');
-  const risks = get('risks').filter((r) => r.jenis === 'Risiko' && r.status !== 'Closed');
-  const emp = get('employees');
+  const measurements = kpi.filter((r) => Number.isFinite(r.capaian));
+  const achieved = measurements.filter((r) => r.status === 'Tercapai').length;
+  const residual = get('risks').filter((r) => r.jenis === 'Risiko' && r.status !== 'Closed' && PRIORITY_RISK_LEVELS.includes(r.residualLevel)).length;
   const docs = get('documents');
-  const fnd = get('findings');
+  const unverified = docs.filter((r) => r.status === 'Belum Diverifikasi').length;
+  const audit = get('audits');
   const capa = get('capa');
-  const isu = get('pestel');
-  const okKpi = count(kpi, (k) => k.status === 'Tercapai');
-  const kompeten = pct(count(emp, (e) => e.status === 'Kompeten'), emp.length, 0);
-  const extreme = count(risks, (r) => r.level === 'Extreme');
-  const expired = count(docs, (d) => d.status === 'Kadaluarsa');
-  const late = count(fnd, (f) => f.terlambat === 'Ya' && f.status !== 'Tertutup');
-  const overdue = count(capa, (c) => c.status === 'Overdue');
-  const prioritas = count(isu, (i) => i.status === 'Prioritas');
+  const overdue = capa.filter((r) => r.status !== 'Closed' && r.target && r.target < TODAY).length;
   return {
-    pestel: { metric: `${prioritas} isu prioritas`, ok: prioritas <= 10 },
-    executive: { metric: `${okKpi}/${kpi.length} KPI tercapai`, ok: okKpi / kpi.length >= 0.55 },
-    risk: { metric: `${extreme} risiko extreme`, ok: extreme <= 2 },
-    skill: { metric: `${kompeten}% karyawan kompeten`, ok: kompeten >= 75 },
-    edoc: { metric: `${expired} dokumen kadaluarsa`, ok: expired <= 3 },
-    audit: { metric: `${late} temuan lewat deadline`, ok: late <= 5 },
-    capa: { metric: `${overdue} CAPA overdue`, ok: overdue <= 3 },
+    pestel: { metric: get('pestel').length + ' isu tercatat' },
+    executive: { metric: measurements.length ? achieved + ' dari ' + measurements.length + ' sasaran terukur tercapai' : 'Belum ada realisasi' },
+    risk: { metric: residual + ' risiko akhir berbahaya atau lebih', badge: residual ? 'Perlu Perhatian' : null },
+    skill: { metric: get('knowledge').length + ' topik pengetahuan kerja' },
+    edoc: { metric: docs.length + ' dokumen dalam katalog', badge: unverified ? 'Belum Diverifikasi' : null },
+    audit: { metric: audit.length ? audit.length + ' audit tercatat' : 'Belum ada catatan audit' },
+    capa: { metric: capa.length ? capa.length + ' FTKAR tercatat' : 'Belum ada catatan FTKAR', badge: overdue ? 'Perlu Perhatian' : null },
   };
 }
 
@@ -47,8 +40,8 @@ function health(get) {
 function tasks(get) {
   const list = [];
   const due = (d) => (d ? daysBetween(TODAY, d) : 999);
-  for (const c of get('capa').filter((x) => x.status === 'Overdue')) {
-    list.push({ group: 'CAPA', module: 'capa', title: `${c.id} melewati target`, detail: c.masalah, when: c.target, score: due(c.target), href: drillHref('capa', { id: c.id }, { open: c.id }) });
+  for (const c of get('capa').filter((x) => x.status !== 'Closed' && x.target && x.target < TODAY)) {
+    list.push({ group: 'FTKAR', module: 'capa', title: `${c.id} melewati target`, detail: c.masalah, when: c.target, score: due(c.target), href: drillHref('capa', { id: c.id }, { open: c.id }) });
   }
   for (const f of get('findings').filter((x) => x.status !== 'Tertutup' && x.terlambat === 'Ya')) {
     list.push({ group: 'Audit', module: 'audit', title: `Temuan ${f.kategori.toLowerCase()} belum ditutup`, detail: `${f.deskripsi}, ${f.area}`, when: f.deadline, score: due(f.deadline), href: drillHref('findings', { id: f.id }, { open: f.id }) });
@@ -62,22 +55,19 @@ function tasks(get) {
   for (const c of get('certifications').filter((x) => x.status === 'Akan Kadaluarsa')) {
     list.push({ group: 'SDM', module: 'skill', title: `Sertifikat ${c.karyawan} akan kadaluarsa`, detail: c.sertifikasi, when: c.kadaluarsa, score: c.sisaHari, href: drillHref('certifications', { id: c.id }, { open: c.id }) });
   }
-  for (const r of get('risks').filter((x) => x.level === 'Extreme' && x.status !== 'Closed')) {
-    list.push({ group: 'Risiko', module: 'risk', title: 'Risiko extreme perlu mitigasi', detail: r.deskripsi, when: r.target, score: due(r.target), href: drillHref('risks', { id: r.id }, { open: r.id }) });
-  }
-  for (const k of get('okr').filter((x) => ['At Risk', 'Belum Tercapai'].includes(x.status))) {
-    list.push({ group: 'Risiko', module: 'risk', title: `Key result ${k.status.toLowerCase()}`, detail: k.keyResult, when: k.updateTerakhir, score: 30, href: drillHref('okr', { id: k.id }, { open: k.id }) });
+  for (const r of get('risks').filter((x) => PRIORITY_RISK_LEVELS.includes(x.residualLevel) && x.jenis === 'Risiko' && x.status !== 'Closed')) {
+    list.push({ group: 'Risiko', module: 'risk', title: 'Risiko akhir ' + r.residualLevel.toLowerCase(), detail: r.deskripsi, when: r.target, score: due(r.target), href: drillHref('risks', { id: r.id }, { open: r.id }) });
   }
   return list.sort((a, b) => a.score - b.score);
 }
 
 const QUICK = [
-  ['capa', 'CAPA baru'],
+  ['capa', 'FTKAR baru'],
   ['findings', 'Catat temuan'],
   ['feedback', 'Input feedback'],
   ['risks', 'Tambah risiko'],
   ['documents', 'Tambah dokumen'],
-  ['kpi-monthly', 'Input realisasi KPI'],
+  ['kpi-monthly', 'Input realisasi sasaran'],
 ];
 
 export default function ImsOverview() {
@@ -86,6 +76,7 @@ export default function ImsOverview() {
   const get = (k) => combine(k, st);
   const h = health(get);
   const all = tasks(get);
+  const activities = activitiesOf(get);
   const [group, setGroup] = useState('Semua');
   const [expanded, setExpanded] = useState(false);
   const groups = ['Semua', ...new Set(all.map((t) => t.group))];
@@ -97,7 +88,8 @@ export default function ImsOverview() {
       <div className="page-title-row">
         <div>
           <div className="page-eyebrow">Klausul 4-10</div>
-          <h1>IMS 360° Integrated Management System</h1>
+          <h1>Sistem Manajemen Mutu STI</h1>
+          <p className="muted">{COMPANY.standard} · {COMPANY.products}</p>
         </div>
       </div>
 
@@ -107,13 +99,21 @@ export default function ImsOverview() {
             <Link key={m.id} href={`/${m.id}`} className="health-card">
               <span className="health-top">
                 <span className="health-icon"><m.icon aria-hidden /></span>
-                {h[m.id].ok ? <Badge value="Baik" /> : <Badge value="Perlu Perhatian">Perhatian</Badge>}
+                {h[m.id].badge && <Badge value={h[m.id].badge} />}
               </span>
               <strong>{m.short}</strong>
               <span className="health-metric">{h[m.id].metric}</span>
             </Link>
           ))}
         </div>
+
+        <Card title="Model proses bisnis STI" actions={<Link className="btn-ghost" href={drillHref('documents', { id: 'STI-SRC-001' }, { open: 'STI-SRC-001' })}>Quality Manual</Link>}>
+          <div className="notes">
+            {PROCESS_GROUPS.map(([name, description]) => <p key={name}><strong>{name}</strong><br />{description}</p>)}
+            <p><strong>Kebijakan mutu</strong><br />{COMPANY.qualityPolicy}</p>
+            <p><strong>Klausul 8.3 perlu klarifikasi MR</strong><br />Riwayat revisi pada halaman PDF 1 mencatat penambahan kembali aktivitas desain dan pengembangan. Bagian 4.3 pada halaman PDF 7 masih mencatat pengecualian.</p>
+          </div>
+        </Card>
 
         <div className="grid-main-side">
           <Card title={`Perlu tindakan (${all.length})`} flush actions={<Seg value={group} onChange={(g) => { setGroup(g); setExpanded(false); }} options={groups.map((g) => [g, g, g === 'Semua' ? all.length : all.filter((t) => t.group === g).length])} />}>
@@ -147,7 +147,8 @@ export default function ImsOverview() {
             </Card>
             <Card title="Aktivitas terbaru" flush className="grow">
               <div className="feed fill-scroll" style={{ minHeight: 200 }}>
-                {ACTIVITIES.slice(0, 12).map((a, i) => (
+                {activities.length === 0 && <div className="cell-empty">Belum ada aktivitas tercatat.</div>}
+                {activities.slice(0, 12).map((a, i) => (
                   <Link key={i} href={a.href} className="feed-item">
                     <span className="feed-body"><strong>{a.who}</strong> {a.what}<br />{a.detail}</span>
                     <span className="feed-time">{a.when}</span>
@@ -160,7 +161,7 @@ export default function ImsOverview() {
 
         <div className="grid-2">
           <ChartCard cfg={chartOf('kpi-monthly', 'tren')} rows={get('kpi-monthly')} href={drillHref('kpi-monthly')} onPick={(p) => router.push(drillHref('kpi-monthly', p))} />
-          <ChartCard cfg={{ ...chartOf('okr', 'status'), title: 'Status OKR' }} rows={get('okr')} href={drillHref('okr')} onPick={(p) => router.push(drillHref('okr', p))} />
+          <ChartCard cfg={chartOf('okr', 'pemilik')} rows={get('okr')} href={drillHref('okr')} onPick={(p) => router.push(drillHref('okr', p))} />
         </div>
       </div>
     </AppShell>

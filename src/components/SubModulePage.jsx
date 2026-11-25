@@ -204,7 +204,7 @@ export default function SubModulePage({ datasetKey }) {
     <AppShell moduleId={mod.id} datasetKey={datasetKey} title={sub.short}>
       <Breadcrumb items={[{ label: 'Semua Sistem', href: '/' }, { label: mod.short, href: `/${mod.id}` }, { label: sub.short }]} />
       <div className="page-title-row">
-        <h1>{sub.short}</h1>
+        <div><h1>{sub.short}</h1><p className="muted">{ds.description}</p></div>
         <div className="page-header-actions">
           {changes > 0 && (confirmReset ? (
             <span className="inline-confirm">
@@ -336,7 +336,7 @@ export default function SubModulePage({ datasetKey }) {
               </thead>
               <tbody>
                 {visible.length === 0 && (
-                  <tr><td colSpan={cols.length + 1} className="cell-empty">Tidak ada data yang cocok.</td></tr>
+                  <tr><td colSpan={cols.length + 1} className="cell-empty">{allRows.length ? 'Tidak ada data yang cocok.' : 'Belum ada catatan.'}</td></tr>
                 )}
                 {visible.map((r, i) => (
                   <tr key={r.id} className="clickable" onClick={() => openRecord(r.id)}>
@@ -388,6 +388,10 @@ function RecordDrawer({ ds, datasetKey, row, get, canEdit, editing, setEditing, 
   }, [onClose]);
   const fields = [...ds.columns.filter((c) => c.key !== ds.titleKey), ...(ds.extra ?? [])].filter((c, i, arr) => arr.findIndex((x) => x.key === c.key) === i);
   const related = ds.related?.(row) ?? [];
+  if (row.dokumenId) {
+    const label = row.halamanSumber ? 'Dokumen sumber · halaman PDF ' + row.halamanSumber : 'Dokumen sumber';
+    related.push({ label, dataset: 'documents', filters: { id: row.dokumenId }, open: row.dokumenId });
+  }
   return (
     <>
       <div className="drawer-overlay" onClick={onClose} />

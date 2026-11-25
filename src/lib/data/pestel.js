@@ -1,212 +1,50 @@
-// Data dummy: Konteks organisasi (Klausul 4.1) dan pihak berkepentingan (4.2).
-import { rng, LAST6, PEOPLE, addDays, pad, TODAY, monthOf } from './core';
-
-export const PESTEL_FACTORS = [
-  { key: 'Political', label: 'Political', letter: 'P', color: '#3b5bdb', tone: 'blue' },
-  { key: 'Economic', label: 'Economic', letter: 'E', color: '#5f6f86', tone: 'mint' },
-  { key: 'Social', label: 'Social', letter: 'S', color: '#b9c3d6', tone: 'peach' },
-  { key: 'Technological', label: 'Technological', letter: 'T', color: '#8fa2e6', tone: 'lilac' },
-  { key: 'Environmental', label: 'Environmental', letter: 'E', color: '#1d2c6e', tone: 'mint' },
-  { key: 'Legal', label: 'Legal', letter: 'L', color: '#a58a5a', tone: 'rose' },
+const context = [
+  [1, 'Marketing', 'Internal', 'Output produksi kurang', 'Lost order', 'Marketing, PPQC, Produksi', 'Permintaan pasar terpenuhi', 'Penambahan mesin dan peningkatan efisiensi'],
+  [1, 'Marketing', 'Internal', 'Harga kompetitor lebih rendah', 'Lost order', 'Produksi, PPC, Pembelian', 'Harga bersaing dengan mutu yang terjaga', 'Mengupayakan harga bahan baku dan menjaga kualitasnya'],
+  [1, 'Marketing', 'Eksternal', 'Tingkat kepercayaan pembeli', 'Lost order', 'Pelanggan, Marketing, FAT', 'Stabilitas layanan yang saling menguntungkan', 'Menjaga ketersediaan, kualitas, dan harga sesuai pasar'],
+  [2, 'PPC', null, 'Benang berbeda lot', 'Produksi terganggu', 'Produksi, PPC, Marketing, Gudang', 'Kedatangan benang dengan lot yang sama', 'Menjaga kestabilan pasokan benang dan lot'],
+  [2, 'PPC', null, 'Benang rangkap', 'Roll kecil meningkat', 'Produksi, PPC, Pembelian', 'Bahan baku benang tanpa rangkap', 'Tindak lanjut ke Pembelian dan evaluasi pemasok benang'],
+  [2, 'PPC', null, 'Pergantian konstruksi di tengah proses', 'Produksi terganggu dan aval meningkat', 'Produksi, PPC, Marketing', 'Pergantian konstruksi selama produksi diminimalkan', 'Menjaga kestabilan order'],
+  [2, 'PPC', null, 'Over WIP', 'Biaya operasional tinggi', 'Produksi, PPC, Persiapan, FAT', 'Stok beam sesuai rencana produksi', 'Memastikan stok beam akhir bulan sesuai rencana PPC'],
+  [3, 'Pembelian', 'Internal', 'Barang yang dibutuhkan sudah discontinued', 'Penyediaan barang terlambat', 'Pengguna dan pemasok', 'Kebutuhan barang tetap terpenuhi', 'Mencari barang pengganti bersama pengguna dan pemasok'],
+  [3, 'Pembelian', 'Internal', 'Karakteristik dan spesifikasi barang kompleks', 'Barang tidak bisa digunakan atau pemesanan terlambat', 'Pembelian dan bagian terkait', 'Spesifikasi barang ditulis sesuai kebutuhan', 'Melengkapi identitas dan spesifikasi barang pada PR'],
+  [4, 'FAT', 'Internal', 'Peralihan sistem dari DOS ke web', 'Gangguan pemindahan data dan peluang pelaporan yang lebih mudah diakses', 'Seluruh bagian', 'Laporan dapat diakses kapan pun dan dari berbagai lokasi', 'Menyiapkan instruksi kerja dan pelatihan sistem web per bagian'],
+  [5, 'HRD', 'Internal', 'Rekrutmen mekanik berpengalaman', 'Kandidat berpengalaman sulit diperoleh', 'Mekanik dan Produksi', 'Kebutuhan tenaga kerja mekanik terpenuhi', 'Membuka kesempatan bagi kandidat tanpa pengalaman melalui program Balai Latihan Kerja'],
+  [6, 'GA', 'Internal', 'Belum tersedia alat scanner untuk kendaraan baru', 'Diagnosis kerusakan kendaraan kurang optimal', 'GA', 'Tersedia alat scanner yang sesuai', 'Pengadaan scanner yang sesuai untuk kendaraan'],
+  [7, 'Persiapan', 'Internal', 'Kestabilan bunching', 'Mesin sering berhenti pada arah pakan', 'Loom, Persiapan, Maintenance', 'Kualitas bunching stabil', 'Kontrol bunching sesuai standar'],
+  [7, 'Persiapan', 'Internal', 'Beam bermasalah', 'Mesin sering berhenti pada arah lusi, aval tinggi, dan efisiensi rendah', 'Loom, Persiapan, PPQC', 'Gulungan awal beam sizing baik', 'Memeriksa kualitas gulungan beam sizing'],
+  [8, 'Loom Weaving I', 'Internal', 'Lebar kain tidak stabil', 'Kepercayaan pelanggan menurun', 'PPQC dan bagian terkait', 'Perhitungan konstruksi sesuai dan alat ukur tegangan tersedia', 'Pencegahan masalah tegangan benang lusi dan pakan'],
+  [8, 'Loom Weaving I', 'Internal', 'Ketersediaan beam tidak sesuai kebutuhan mesin dan konstruksi', 'Produksi Loom terganggu', 'Loom dan Persiapan', 'Beam tersedia sesuai konstruksi dan rencana', 'Mengontrol stok beam per konstruksi'],
+  [9, 'Loom Weaving II', 'Internal', 'Tingkat kehadiran operator di bawah 99%', 'Proses produksi terganggu', 'Produksi', 'Pengaturan cuti dan pengurangan absensi', 'Memantau tingkat kehadiran operator'],
+  [10, 'Finishing', 'Internal', 'Order dari PPC kurang stabil', 'Hasil produksi tidak sesuai kapasitas mesin', 'Finishing, FAT, PPC', 'Order stabil sesuai kapasitas mesin', 'Memenuhi kebutuhan bahan baku kain grey'],
+  [10, 'Finishing', 'Internal', 'Tekanan uap kurang stabil', 'Produksi terlambat dan kualitas berkurang', 'Produksi Finishing', 'Tekanan uap minimal 5 bar', 'Menjaga pasokan uap sesuai standar proses'],
+  [10, 'Finishing', 'Internal', 'Tekanan udara kompresor tidak stabil', 'Produksi terlambat dan kualitas berkurang', 'Produksi Finishing', 'Tekanan udara kompresor minimal 6 bar', 'Menjaga tekanan kompresor sesuai standar proses'],
+  [10, 'Finishing', 'Internal', 'Shrinkage tinggi', 'Keluhan pelanggan', 'Produksi Finishing, Marketing, PPC', 'Overfeed berfungsi normal', 'Mengendalikan fungsi overfeed'],
+  [11, 'Maintenance', 'Eksternal', 'Kedatangan suku cadang terlambat', 'Stok suku cadang di gudang kosong'],
+  [12, 'Utility', 'Internal', 'Tangki dan pipa distribusi pengolahan air keropos', 'Distribusi air ke produksi dan kantor terganggu', 'Seluruh bagian', 'Distribusi air lancar', 'Penggantian pipa'],
+  [13, 'QC Weaving', 'Internal', 'Sisa pakan tertenun pada kain', 'Hasil produksi terhambat', 'QC Weaving, Produksi, Maintenance', 'Kain dengan sisa pakan tertenun yang terkendali'],
+  [14, 'Laborat', 'Internal', 'Alat ukur belum terkalibrasi', 'Kualitas hasil produksi tidak sesuai', 'Laborat', 'Kalibrasi rutin dan periodik', 'Melaksanakan kalibrasi tepat waktu'],
+  [15, 'Gudang', 'Internal', 'Pengiriman kain dari QC Weaving ke Gudang terlambat', 'Pengiriman kain ke pelanggan terlambat', 'Gudang dan Marketing', 'Pengiriman kain tepat waktu', 'Mempercepat pemeriksaan kain dan kesiapan forklift'],
+  [16, 'MIS', 'Internal', 'Jaringan lokal sering terputus', 'Pelaporan administrasi dan komunikasi terhambat', 'Seluruh bagian', 'Pembaruan jalur instalasi', 'Pemeriksaan dan perawatan jaringan'],
+  [17, 'Maintenance Finishing', 'Internal', 'Kain sering putus saat proses CBR', 'Kain rusak', 'Mekanik dan Elektrik Finishing', 'Cloth guider berjalan normal', 'Perawatan terjadwal'],
 ];
 
-// Isu khas pabrik garmen ekspor. [isu, dampak, jenis, departemen, tindakan]
-const ISSUES = {
-  Political: [
-    ['Perubahan kebijakan impor kain & aksesoris', 'Tinggi', 'Risiko', 'Purchasing', 'Diversifikasi pemasok lokal untuk kain cotton & interlining'],
-    ['Insentif kawasan berikat & KITE', 'Sedang', 'Peluang', 'Finance', 'Ajukan fasilitas KITE untuk bahan baku order ekspor'],
-    ['Stabilitas politik menjelang Pilkada daerah', 'Rendah', 'Risiko', 'HR & GA', 'Pantau isu ketenagakerjaan lokal bersama Disnaker'],
-    ['Perjanjian dagang IEU-CEPA', 'Tinggi', 'Peluang', 'Merchandising', 'Petakan buyer Uni Eropa yang mendapat tarif preferensi'],
-    ['Kebijakan safeguard tekstil', 'Sedang', 'Risiko', 'Purchasing', 'Hitung ulang landed cost kain impor'],
-    ['Program hilirisasi industri TPT pemerintah', 'Sedang', 'Peluang', 'QMR', 'Ikuti program restrukturisasi mesin Kemenperin'],
-    ['Perubahan kebijakan upah minimum provinsi', 'Tinggi', 'Risiko', 'HR & GA', 'Simulasi biaya tenaga kerja & target efisiensi line'],
-    ['Kebijakan bea masuk negara tujuan ekspor', 'Sedang', 'Risiko', 'Merchandising', 'Review syarat asal barang (rules of origin)'],
-  ],
-  Economic: [
-    ['Fluktuasi kurs USD terhadap Rupiah', 'Tinggi', 'Risiko', 'Finance', 'Natural hedging pembelian kain dalam USD'],
-    ['Kenaikan harga benang & kain cotton', 'Tinggi', 'Risiko', 'Purchasing', 'Kontrak harga 6 bulan dengan pemasok utama'],
-    ['Inflasi & daya beli pasar domestik', 'Sedang', 'Risiko', 'Merchandising', 'Fokus portofolio ekspor 80%'],
-    ['Kenaikan suku bunga acuan', 'Sedang', 'Risiko', 'Finance', 'Restrukturisasi fasilitas modal kerja'],
-    ['Pertumbuhan permintaan workwear', 'Sedang', 'Peluang', 'Merchandising', 'Kembangkan lini produk seragam kerja'],
-    ['Biaya logistik & freight kontainer', 'Tinggi', 'Risiko', 'PPIC', 'Konsolidasi pengiriman per buyer'],
-    ['Kenaikan tarif listrik industri', 'Sedang', 'Risiko', 'Maintenance', 'Audit energi & penggantian motor servo'],
-    ['Relokasi order dari negara pesaing', 'Tinggi', 'Peluang', 'Merchandising', 'Siapkan kapasitas 2 line tambahan'],
-    ['Persaingan harga dengan Vietnam & Bangladesh', 'Tinggi', 'Risiko', 'QMR', 'Tingkatkan efisiensi line & RFT'],
-    ['Akses pembiayaan hijau (green financing)', 'Rendah', 'Peluang', 'Finance', 'Siapkan data emisi untuk pengajuan'],
-  ],
-  Social: [
-    ['Perubahan gaya hidup & tren fast fashion', 'Sedang', 'Peluang', 'Merchandising', 'Percepat sampling dengan pola digital'],
-    ['Demografi tenaga kerja muda (Gen Z)', 'Sedang', 'Risiko', 'HR & GA', 'Program onboarding & jenjang karier operator'],
-    ['Kesadaran konsumen terhadap produk etis', 'Tinggi', 'Peluang', 'QMR', 'Persiapkan sertifikasi social compliance'],
-    ['Turnover operator sewing tinggi', 'Tinggi', 'Risiko', 'HR & GA', 'Skema insentif kehadiran & skill bonus'],
-    ['Ekspektasi kesejahteraan pekerja', 'Sedang', 'Risiko', 'HR & GA', 'Dialog bipartit triwulanan dengan serikat'],
-    ['Tren digitalisasi belanja buyer', 'Sedang', 'Peluang', 'IT', 'Portal buyer untuk tracking order'],
-    ['Hubungan dengan masyarakat sekitar pabrik', 'Rendah', 'Risiko', 'HR & GA', 'Program CSR & rekrutmen warga lokal'],
-  ],
-  Technological: [
-    ['Otomasi mesin jahit & cutting otomatis', 'Tinggi', 'Peluang', 'Maintenance', 'Pilot auto cutter di Cutting'],
-    ['Digitalisasi supply chain & traceability', 'Tinggi', 'Peluang', 'PPIC', 'Implementasi barcode bundle tracking'],
-    ['Keamanan siber sistem ERP', 'Sedang', 'Risiko', 'IT', 'Backup harian & MFA seluruh pengguna ERP'],
-    ['Adopsi CAD & 3D sampling', 'Sedang', 'Peluang', 'Merchandising', 'Pelatihan CAD pola untuk tim sampling'],
-    ['Inovasi bahan daur ulang (recycled fabric)', 'Sedang', 'Peluang', 'Purchasing', 'Uji coba 2 supplier recycled polyester'],
-    ['Keusangan mesin jahit generasi lama', 'Tinggi', 'Risiko', 'Maintenance', 'Rencana peremajaan 120 unit mesin'],
-    ['Sistem MES real-time di lantai produksi', 'Sedang', 'Peluang', 'IT', 'Integrasi output per jam ke dashboard'],
-    ['AI untuk inspeksi visual cacat kain', 'Rendah', 'Peluang', 'Quality Control', 'Studi kelayakan kamera inspeksi'],
-    ['Ketergantungan pada vendor IT tunggal', 'Sedang', 'Risiko', 'IT', 'Dokumentasi & transfer knowledge sistem'],
-  ],
-  Environmental: [
-    ['Regulasi emisi karbon buyer Eropa', 'Tinggi', 'Risiko', 'QMR', 'Hitung jejak karbon per produk'],
-    ['Pengelolaan limbah perca kain', 'Sedang', 'Peluang', 'Warehouse', 'Kerja sama daur ulang perca dengan UMKM'],
-    ['Perubahan iklim & cuaca ekstrem', 'Sedang', 'Risiko', 'PPIC', 'Rencana kontinjensi banjir gudang'],
-    ['Efisiensi energi & panel surya atap', 'Sedang', 'Peluang', 'Maintenance', 'Studi PLTS atap 500 kWp'],
-    ['Penggunaan bahan kimia di proses washing', 'Tinggi', 'Risiko', 'Finishing', 'Daftar bahan kimia sesuai MRSL'],
-    ['Konsumsi air proses finishing', 'Rendah', 'Risiko', 'Finishing', 'Pasang meter air per area'],
-  ],
-  Legal: [
-    ['Perubahan regulasi ketenagakerjaan', 'Tinggi', 'Risiko', 'HR & GA', 'Review PKB & peraturan perusahaan'],
-    ['Kewajiban pelaporan SMK3 & lingkungan', 'Sedang', 'Risiko', 'QMR', 'Kalender kepatuhan perizinan'],
-    ['Perlindungan data pribadi (UU PDP)', 'Sedang', 'Risiko', 'IT', 'Klasifikasi data karyawan & buyer'],
-    ['Hak kekayaan intelektual desain buyer', 'Sedang', 'Risiko', 'Merchandising', 'NDA & kontrol akses pola digital'],
-    ['Persyaratan due diligence HAM (CSDDD)', 'Tinggi', 'Risiko', 'QMR', 'Pemetaan risiko HAM rantai pasok'],
-    ['Perubahan standar ISO 9001:2026', 'Tinggi', 'Peluang', 'QMR', 'Gap assessment & transisi sistem manajemen'],
-    ['Regulasi label & komposisi produk tujuan ekspor', 'Sedang', 'Risiko', 'Quality Control', 'Verifikasi label care & fiber content'],
-    ['Perpajakan & insentif tax holiday', 'Rendah', 'Peluang', 'Finance', 'Konsultasi insentif investasi mesin'],
-  ],
-};
+export const pestelIssues = context.map(([halamanSumber, departemen, jenis, isu, risikoPeluang, pihak, harapan, tindakan], index) => ({
+  id: 'STI-KO-' + (index + 1), isu, jenis, departemen, risikoPeluang, pihak, harapan, tindakan,
+  periode: 'Januari–Desember 2026', dokumenId: 'STI-SRC-004', halamanSumber,
+}));
 
-const STATUS_PLAN = [
-  ...Array(8).fill('Prioritas'), ...Array(12).fill('On Progress'), ...Array(8).fill('Monitoring'), ...Array(20).fill('Closed'),
-];
+export const stakeholders = [
+  ['Pelanggan', 'Eksternal', 'Pelanggan', 'Stabilitas layanan dan kerja sama yang saling menguntungkan', 1],
+  ['Marketing, PPQC, dan Produksi', 'Internal', 'Bagian internal', 'Permintaan pasar terpenuhi', 1],
+  ['Produksi, PPC, Marketing, dan Gudang', 'Internal', 'Bagian internal', 'Kedatangan benang dengan lot yang sama', 2],
+  ['Pembelian dan bagian terkait', 'Internal', 'Bagian internal', 'Spesifikasi barang sesuai kebutuhan pengguna', 3],
+  ['Pengguna dan pemasok', 'Eksternal / Internal', 'Pemasok dan pengguna', 'Kebutuhan barang terpenuhi walaupun barang lama dihentikan', 3],
+  ['Loom, Persiapan, dan Maintenance', 'Internal', 'Bagian internal', 'Kualitas bunching stabil', 7],
+  ['Finishing, FAT, dan PPC', 'Internal', 'Bagian internal', 'Kestabilan order sesuai kapasitas mesin', 10],
+].map(([nama, tipe, kategori, kebutuhan, halamanSumber], i) => ({
+  id: 'STI-PK-' + (i + 1), nama, tipe, kategori, kebutuhan, dokumenId: 'STI-SRC-004', halamanSumber,
+}));
 
-function buildPestel() {
-  const r = rng('pestel');
-  const flat = PESTEL_FACTORS.flatMap((f) => ISSUES[f.key].map((x) => ({ faktor: f.key, x })));
-  // Isu berdampak tinggi lebih mungkin menjadi prioritas; isu ringan lebih cepat ditutup.
-  const ordered = [...flat].sort((a, b) => ({ Tinggi: 0, Sedang: 1, Rendah: 2 }[a.x[1]] - { Tinggi: 0, Sedang: 1, Rendah: 2 }[b.x[1]]) + (r.next() - 0.5) * 1.6);
-  const statusOf = new Map(ordered.map((o, i) => [o, STATUS_PLAN[i]]));
-  return flat.map((o, i) => {
-    const [isu, dampak, jenis, departemen, tindakan] = o.x;
-    const bulan = r.weighted(LAST6.map((m, j) => [m, 1 + j * 0.25]));
-    const tanggal = r.dateIn(bulan);
-    const kemungkinan = dampak === 'Tinggi' ? r.int(3, 5) : dampak === 'Sedang' ? r.int(2, 4) : r.int(1, 3);
-    const dampakNum = dampak === 'Tinggi' ? r.int(4, 5) : dampak === 'Sedang' ? 3 : r.int(1, 2);
-    const status = statusOf.get(o);
-    return {
-      id: `PST-${pad(i + 1)}`,
-      faktor: o.faktor,
-      isu,
-      jenis,
-      dampak,
-      kemungkinan,
-      skor: kemungkinan * dampakNum,
-      status,
-      departemen,
-      pic: r.pick(PEOPLE.slice(0, 30)),
-      tanggal,
-      bulan,
-      target: status === 'Closed' ? null : addDays(TODAY, r.int(7, 120)),
-      tindakan,
-    };
-  });
-}
-
-export const pestelIssues = buildPestel();
-
-// ─── Stakeholder ───────────────────────────────────────────────────────────
-// [nama, kategori, tipe, pengaruh, kepentingan, kebutuhan & harapan]
-const STAKEHOLDERS = [
-  ['Nordline Apparel (Uni Eropa)', 'Pelanggan', 'Eksternal', 9, 10, 'Kualitas konsisten, on-time delivery, kepatuhan social compliance'],
-  ['Kazuo Retail Japan', 'Pelanggan', 'Eksternal', 8, 9, 'Zero defect jahitan, label sesuai standar Jepang'],
-  ['Westbay Outfitters (AS)', 'Pelanggan', 'Eksternal', 8, 8, 'Lead time singkat, traceability bahan'],
-  ['Southern Cross Uniform (Australia)', 'Pelanggan', 'Eksternal', 6, 7, 'Harga kompetitif, ketahanan warna'],
-  ['PT Tekstil Priangan Jaya', 'Pemasok', 'Eksternal', 7, 8, 'Forecast order akurat, pembayaran tepat waktu'],
-  ['CV Aksesoris Mandiri', 'Pemasok', 'Eksternal', 4, 6, 'Spesifikasi kancing & zipper yang jelas'],
-  ['PT Benang Sentosa', 'Pemasok', 'Eksternal', 5, 6, 'Volume pembelian stabil'],
-  ['Mitra Logistik Samudra', 'Pemasok', 'Eksternal', 5, 5, 'Jadwal stuffing pasti'],
-  ['Kementerian Perindustrian', 'Pemerintah', 'Eksternal', 8, 5, 'Laporan industri & kepatuhan SNI'],
-  ['Disnaker Kab. Majalengka', 'Pemerintah', 'Eksternal', 7, 6, 'Kepatuhan norma ketenagakerjaan & K3'],
-  ['Dinas Lingkungan Hidup', 'Pemerintah', 'Eksternal', 7, 5, 'Pelaporan limbah & emisi'],
-  ['Kantor Bea Cukai', 'Pemerintah', 'Eksternal', 8, 4, 'Ketertiban dokumen kawasan berikat'],
-  ['Bank Mitra Nusantara', 'Lembaga Keuangan', 'Eksternal', 6, 5, 'Kinerja keuangan & ketepatan cicilan'],
-  ['BPJS Ketenagakerjaan', 'Lembaga Keuangan', 'Eksternal', 4, 4, 'Kepesertaan & iuran tepat waktu'],
-  ['LSM Lingkungan Citarum Lestari', 'LSM', 'Eksternal', 4, 6, 'Transparansi pengelolaan limbah'],
-  ['Masyarakat Desa Sukamulya', 'Masyarakat', 'Eksternal', 5, 7, 'Rekrutmen warga lokal, lingkungan bersih'],
-  ['Media Lokal Jabar', 'Media', 'Eksternal', 3, 3, 'Informasi kegiatan & CSR'],
-  ['Lembaga Sertifikasi ISO', 'Badan Sertifikasi', 'Eksternal', 7, 6, 'Bukti penerapan SMM yang efektif'],
-  ['Auditor Social Compliance Buyer', 'Badan Sertifikasi', 'Eksternal', 8, 7, 'Akses data jam kerja & upah'],
-  ['Asosiasi Pertekstilan Indonesia', 'Asosiasi', 'Eksternal', 4, 5, 'Partisipasi program industri'],
-  ['Dewan Direksi', 'Manajemen', 'Internal', 10, 10, 'Profitabilitas, pertumbuhan, reputasi'],
-  ['Pemegang Saham', 'Manajemen', 'Internal', 9, 8, 'Imbal hasil & tata kelola'],
-  ['Karyawan Produksi', 'Karyawan', 'Internal', 6, 9, 'Upah layak, keselamatan kerja, jenjang karier'],
-  ['Karyawan Staf & Supervisor', 'Karyawan', 'Internal', 6, 8, 'Pengembangan kompetensi & penghargaan'],
-  ['Serikat Pekerja (PUK SPN)', 'Serikat Pekerja', 'Internal', 7, 9, 'Dialog bipartit & kepatuhan PKB'],
-  ['Tim Quality Control', 'Karyawan', 'Internal', 5, 8, 'Standar inspeksi jelas & alat ukur terkalibrasi'],
-  ['Tim Merchandising', 'Karyawan', 'Internal', 6, 7, 'Informasi kapasitas & status order real-time'],
-  ['Koperasi Karyawan', 'Karyawan', 'Internal', 3, 5, 'Dukungan manajemen'],
-  ['Komite K3 (P2K3)', 'Karyawan', 'Internal', 5, 7, 'Sumber daya program K3'],
-  ['Tim IT', 'Karyawan', 'Internal', 4, 6, 'Anggaran infrastruktur & keamanan siber'],
-  ['Tim Maintenance', 'Karyawan', 'Internal', 4, 7, 'Suku cadang tersedia & jadwal PM'],
-  ['Manajer Departemen', 'Manajemen', 'Internal', 8, 9, 'Data kinerja akurat untuk keputusan'],
-];
-
+export const stakeholderComms = [];
 export const quadrantOf = (p, k) => (p >= 6 ? (k >= 6 ? 'Kelola Ketat' : 'Jaga Kepuasan') : k >= 6 ? 'Jaga Informasi' : 'Pantau');
-
-function buildStakeholders() {
-  const r = rng('stakeholders');
-  return STAKEHOLDERS.map(([nama, kategori, tipe, pengaruh, kepentingan, kebutuhan], i) => {
-    const status = r.weighted([['Aktif', 7], ['Monitoring', 2], ['Perlu Tindak Lanjut', 1]]);
-    return {
-      id: `STK-${pad(i + 1)}`,
-      nama,
-      kategori,
-      tipe,
-      pengaruh,
-      kepentingan,
-      kuadran: quadrantOf(pengaruh, kepentingan),
-      prioritas: pengaruh + kepentingan >= 15 ? 'Tinggi' : pengaruh + kepentingan >= 10 ? 'Sedang' : 'Rendah',
-      status,
-      frekuensi: pengaruh + kepentingan >= 15 ? 'Mingguan' : pengaruh + kepentingan >= 11 ? 'Bulanan' : 'Triwulan',
-      pic: r.pick(PEOPLE.slice(0, 24)),
-      kepuasan: r.round(3.4 + r.next() * 1.5, 1),
-      kontakTerakhir: addDays(TODAY, -r.int(1, 60)),
-      kebutuhan,
-    };
-  });
-}
-
-export const stakeholders = buildStakeholders();
-
-const TOPICS = {
-  Pelanggan: ['Review kinerja kualitas bulanan', 'Pembahasan order musim Spring/Summer 2027', 'Konfirmasi jadwal pengiriman', 'Tindak lanjut komplain jahitan', 'Kunjungan audit buyer'],
-  Pemasok: ['Evaluasi kinerja pemasok', 'Negosiasi harga kain', 'Klarifikasi spesifikasi bahan', 'Perbaikan keterlambatan pengiriman'],
-  Pemerintah: ['Pelaporan berkala', 'Sosialisasi regulasi baru', 'Inspeksi kepatuhan'],
-  Karyawan: ['Town hall kebijakan mutu', 'Survey kepuasan karyawan', 'Sosialisasi target produksi'],
-  'Serikat Pekerja': ['Rapat bipartit triwulanan', 'Pembahasan PKB'],
-  Manajemen: ['Tinjauan manajemen (management review)', 'Rapat kinerja bulanan'],
-};
-
-function buildComms() {
-  const r = rng('stk-comms');
-  const rows = [];
-  for (let i = 0; i < 72; i++) {
-    const s = r.weighted(stakeholders.map((x) => [x, x.pengaruh + x.kepentingan]));
-    const bulan = r.pick(LAST6);
-    rows.push({
-      id: `KOM-${pad(i + 1)}`,
-      stakeholder: s.nama,
-      kategori: s.kategori,
-      tipe: s.tipe,
-      tanggal: r.dateIn(bulan),
-      bulan,
-      media: r.weighted([['Meeting', 4], ['Email', 4], ['Telepon', 2], ['Kunjungan', 2], ['Survey', 1]]),
-      topik: r.pick(TOPICS[s.kategori] ?? ['Koordinasi rutin', 'Penyampaian informasi kegiatan']),
-      pic: s.pic,
-      hasil: r.weighted([['Selesai', 6], ['Perlu Tindak Lanjut', 2], ['Terjadwal', 1]]),
-    });
-  }
-  return rows.sort((a, b) => b.tanggal.localeCompare(a.tanggal)).map((x, i) => ({ ...x, id: `KOM-${pad(72 - i)}` }));
-}
-
-export const stakeholderComms = buildComms();
-
-export const pestelThisMonth = pestelIssues.filter((i) => monthOf(i.tanggal) === LAST6[5]).length;

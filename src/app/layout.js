@@ -4,9 +4,9 @@ import './globals.css';
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap', axes: ['opsz'] });
 
 export const metadata = {
-  title: { default: 'IMS Digital System | PT Safarijunie Textindo', template: '%s | IMS Digital System' },
-  description: 'Sistem manajemen mutu digital ISO 9001:2026 PT Safarijunie Textindo — dashboard terintegrasi untuk monitoring kualitas, risiko, audit, dan CAPA.',
-  applicationName: 'IMS Digital System — PT Safarijunie Textindo',
+  title: { default: 'IMS Digital System | PT Safarijunie Textindo Industry', template: '%s | IMS Digital System' },
+  description: 'Sistem manajemen mutu digital ISO 9001:2015 PT Safarijunie Textindo Industry — dashboard terintegrasi untuk pemantauan sasaran mutu, risiko, Audit Mutu Internal, dan FTKAR.',
+  applicationName: 'IMS Digital System — PT Safarijunie Textindo Industry',
   robots: { index: false, follow: false },
 };
 

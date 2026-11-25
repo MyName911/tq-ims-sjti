@@ -23,11 +23,13 @@ export default function RecordForm({ datasetKey, row, get, onSubmit, onCancel, s
       if (f.required && (v === '' || v == null)) next[f.key] = 'Wajib diisi';
       if (f.type === 'number' && v !== '' && v != null) {
         const n = Number(v);
-        if (Number.isNaN(n)) next[f.key] = 'Harus angka';
+        if (!Number.isFinite(n)) next[f.key] = 'Harus angka';
         else if (f.min != null && n < f.min) next[f.key] = `Minimal ${f.min}`;
         else if (f.max != null && n > f.max) next[f.key] = `Maksimal ${f.max}`;
+        else if (f.step == null && !Number.isInteger(n)) next[f.key] = 'Harus bilangan bulat';
       }
     }
+    Object.assign(next, form.validate?.(values, { get, row }));
     setErrors(next);
     if (Object.keys(next).length) return;
     onSubmit(form.build(values, { get, existing: row }));
@@ -39,13 +41,16 @@ export default function RecordForm({ datasetKey, row, get, onSubmit, onCancel, s
         {form.fields.map((f) => {
           const id = `f-${datasetKey}-${f.key}`;
           const opts = typeof f.options === 'function' ? f.options(get) : f.options;
-          const common = { id, value: values[f.key] ?? '', onChange: (e) => set(f.key, e.target.value), 'aria-invalid': !!errors[f.key] };
+          const current = values[f.key];
+          const legacyOption = current !== '' && current != null && opts && !opts.some((o) => String(Array.isArray(o) ? o[0] : o) === String(current));
+          const common = { id, value: values[f.key] ?? '', disabled: Boolean(row && f.lockOnEdit), onChange: (e) => set(f.key, e.target.value), 'aria-invalid': !!errors[f.key] };
           return (
             <div key={f.key} className={`form-group ${f.span === 'full' ? 'span-full' : ''}`}>
               <label className={`form-label ${f.required ? 'required' : ''}`} htmlFor={id}>{f.label}</label>
               {f.type === 'select' ? (
                 <select className="form-select" {...common}>
                   <option value="">Pilih</option>
+                  {legacyOption && <option value={current}>{current}</option>}
                   {opts.map((o) => {
                     const [v, l] = Array.isArray(o) ? o : [o, o];
                     return <option key={v} value={v}>{l}</option>;

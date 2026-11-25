@@ -170,15 +170,15 @@ export function CellValue({ col, row }) {
     case 'pct':
       return v == null ? <span className="muted">-</span> : <span>{fmtNum(v, col.decimals ?? 1)}%</span>;
     case 'progress':
-      return <div style={{ minWidth: 110 }}><Progress value={v} /></div>;
+      return v == null ? <span className="muted">-</span> : <div style={{ minWidth: 110 }}><Progress value={v} /></div>;
     case 'rating':
-      return <Stars value={v} />;
+      return v == null ? <span className="muted">-</span> : <Stars value={v} />;
     case 'level':
-      return <LevelCell level={v} />;
+      return v == null ? <span className="muted">-</span> : <LevelCell level={v} />;
     case 'skills':
       return (
         <div style={{ display: 'flex', gap: 4 }}>
-          {v.map((lv, i) => <LevelCell key={i} level={lv} title={`Target ${row.targets?.[i]}`} />)}
+          {v?.map((lv, i) => lv == null ? <span key={i} className="muted">-</span> : <LevelCell key={i} level={lv} title={`Target ${row.targets?.[i] ?? "—"}`} />)}
         </div>
       );
     default:

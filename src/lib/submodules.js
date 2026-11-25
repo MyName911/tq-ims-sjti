@@ -7,16 +7,16 @@ import {
 
 export const SUBMODULES = {
   pestel: {
-    short: 'Isu PESTEL', icon: Radar,
+    short: 'Isu Organisasi', icon: Radar,
     charts: [
-      { id: 'faktor', title: 'Isu per faktor', type: 'bar', field: 'faktor' },
-      { id: 'bulan', title: 'Isu per bulan', type: 'monthly', field: 'bulan', stack: 'status', months: 'last6' },
+      { id: 'departemen', title: 'Isu per bagian', type: 'bar', field: 'departemen' },
+      { id: 'jenis', title: 'Jenis isu yang tercantum', type: 'donut', field: 'jenis' },
     ],
   },
   stakeholders: {
-    short: 'Stakeholder', icon: Users,
+    short: 'Pihak Berkepentingan', icon: Users,
     charts: [
-      { id: 'peta', title: 'Peta pengaruh & kepentingan', type: 'powerInterest' },
+      { id: 'tipe', title: 'Pihak per jenis', type: 'donut', field: 'tipe' },
       { id: 'kategori', title: 'Kategori stakeholder', type: 'donut', field: 'kategori' },
     ],
   },
@@ -28,9 +28,9 @@ export const SUBMODULES = {
     ],
   },
   kpi: {
-    short: 'KPI', icon: Target,
+    short: 'Sasaran Mutu', icon: Target,
     charts: [
-      { id: 'perspektif', title: 'Capaian per perspektif', type: 'gauges' },
+      { id: 'departemen', title: 'Sasaran mutu per bagian', type: 'bar', field: 'departemen' },
       { id: 'status', title: 'Status KPI', type: 'donut', field: 'status' },
     ],
   },
@@ -56,18 +56,22 @@ export const SUBMODULES = {
     ],
   },
   risks: {
-    short: 'Register Risiko', icon: ShieldAlert,
+    short: 'Risiko dan Peluang', icon: ShieldAlert,
     charts: [
-      { id: 'heatmap', title: 'Heatmap risiko aktif', type: 'heatmap' },
-      { id: 'level', title: 'Level risiko', type: 'donut', field: 'level', order: ['Extreme', 'High', 'Medium', 'Low'] },
+      { id: 'departemen', title: 'Risiko dan peluang per bagian', type: 'bar', field: 'departemen' },
+      { id: 'level', title: 'Tingkat risiko awal (A × B × C)', type: 'donut', field: 'level', where: (r) => r.jenis === 'Risiko', whereFilter: { jenis: 'Risiko' } },
     ],
   },
   okr: {
-    short: 'OKR', icon: Crosshair,
+    short: 'Program Kerja', icon: Crosshair,
     charts: [
-      { id: 'objective', title: 'Progres per objective (%)', type: 'bar', field: 'objective', agg: { field: 'progress', fn: 'avg' }, max: 100, unit: '%' },
-      { id: 'status', title: 'Status key result', type: 'donut', field: 'status' },
+      { id: 'pemilik', title: 'Program kerja per bagian', type: 'bar', field: 'pemilik' },
+      { id: 'status', title: 'Status pelaksanaan', type: 'donut', field: 'status' },
     ],
+  },
+  knowledge: {
+    short: 'Pengetahuan Organisasi', icon: FileText, readOnly: true,
+    charts: [{ id: 'departemen', title: 'Topik per bagian', type: 'bar', field: 'departemen' }],
   },
   employees: {
     short: 'Matriks Karyawan', icon: UserRound,
@@ -120,18 +124,18 @@ export const SUBMODULES = {
     ],
   },
   feedback: {
-    short: 'Feedback', icon: MessageSquareHeart,
+    short: 'Masukan Pelanggan', icon: MessageSquareHeart,
     charts: [
       { id: 'rating', title: 'Distribusi rating', type: 'bar', field: 'rating', order: [5, 4, 3, 2, 1], label: (v) => `${v} bintang` },
       { id: 'bulan', title: 'Sentimen per bulan', type: 'monthly', field: 'bulan', stack: 'sentimen' },
     ],
   },
   capa: {
-    short: 'Daftar CAPA', icon: Wrench,
+    short: 'Daftar FTKAR', icon: Wrench,
     charts: [
-      { id: 'bulan', title: 'CAPA per bulan', type: 'monthly', field: 'bulan', stack: 'status', months: 'last6' },
-      { id: 'kategori', title: 'Kategori CAPA', type: 'donut', field: 'kategori' },
-      { id: 'akar', title: 'Akar penyebab (6M)', type: 'bar', field: 'akarPenyebab' },
+      { id: 'bulan', title: 'FTKAR per bulan', type: 'monthly', field: 'bulan', stack: 'status', months: 'last6' },
+      { id: 'kategori', title: 'Kategori FTKAR', type: 'donut', field: 'kategori' },
+      { id: 'akar', title: 'Akar penyebab', type: 'bar', field: 'akarPenyebab' },
     ],
   },
 };

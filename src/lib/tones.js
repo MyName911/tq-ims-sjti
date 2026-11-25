@@ -2,20 +2,20 @@
 const TONES = {
   success: [
     'Closed', 'Selesai', 'Tertutup', 'Aktif', 'Tercapai', 'Kompeten', 'Sudah Dibaca', 'Positif', 'Pujian', 'Efektif',
-    'Low', 'Rendah', 'Ditandatangani', 'Membaik', 'Terealisasi', 'Ya', 'Baik', 'Sangat Baik',
+    'Low', 'Rendah', 'Tercantum di Manual', 'Ditandatangani', 'Membaik', 'Terealisasi', 'Ya', 'Baik', 'Sangat Baik',
   ],
   warning: [
     'On Progress', 'Dalam Proses', 'Review', 'Perlu Perhatian', 'Perlu Pengembangan', 'Minor', 'At Risk', 'Medium',
-    'Sedang', 'Akan Kadaluarsa', 'Belum Dibaca', 'Revisi', 'Netral', 'Saran', 'Menunggu Persetujuan', 'Berjalan',
+    'Dipertimbangkan', 'Dapat Diterima', 'Sedang', 'Akan Kadaluarsa', 'Belum Dibaca', 'Revisi', 'Netral', 'Saran', 'Menunggu Persetujuan', 'Berjalan',
     'Mitigasi', 'Perlu Tindak Lanjut', 'Cukup', 'Approval',
   ],
   danger: [
-    'Overdue', 'Terbuka', 'Kadaluarsa', 'Gagal Terkirim', 'Major', 'Komplain', 'Negatif', 'Tidak Tercapai',
+    'Berbahaya', 'Sangat Berbahaya', 'Tidak Dapat Diterima', 'Overdue', 'Terbuka', 'Kadaluarsa', 'Gagal Terkirim', 'Major', 'Komplain', 'Negatif', 'Tidak Tercapai',
     'Belum Tercapai', 'Prioritas', 'High', 'Tinggi', 'Extreme', 'Gap', 'Menurun', 'Kurang', 'Rahasia',
   ],
   info: [
     'Open', 'Terjadwal', 'Draft', 'On Track', 'Baru', 'Observasi', 'Internal', 'Rencana', 'Risiko', 'Kelola Ketat',
-    'Belum Diajukan', 'Belum Diverifikasi',
+    'Belum Diajukan', 'Belum Diverifikasi', 'Belum Ada Realisasi', 'Belum Dinilai',
   ],
   lilac: ['OFI', 'Peluang', 'Eksternal', 'Jaga Kepuasan', 'E-Learning', 'Terbatas'],
   sky: ['Monitoring', 'Jaga Informasi', 'Stabil', 'Classroom'],

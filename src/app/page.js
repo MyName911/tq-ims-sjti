@@ -16,7 +16,8 @@ export default function Hub() {
       </header>
 
       <main className="hub-main">
-        <h1 className="hub-title">ISO 9001:2026 Digital System</h1>
+        <h1 className="hub-title">Sistem Manajemen Mutu STI</h1>
+        <p className="hub-scope">{COMPANY.standard} · {COMPANY.products}</p>
         <HubGrid />
       </main>
 

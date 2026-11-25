@@ -7,8 +7,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Bell, LayoutGrid, Menu, PanelLeftClose, PanelLeftOpen, Search, X } from 'lucide-react';
 import { MODULES, moduleById } from '@/lib/modules';
 import { DATASETS, drillHref } from '@/lib/datasets';
-import { NOTIFICATIONS } from '@/lib/activity';
-import { COMPANY, CONSULTANT, DEMO_USER, TODAY, MONTH_FULL } from '@/lib/data/core';
+import { notificationsOf } from '@/lib/activity';
+import { COMPANY, CONSULTANT, WORKSPACE_ROLE, TODAY, MONTH_FULL } from '@/lib/data/core';
 import { SIDEBAR_INTRO_KEY } from '@/lib/ui-state';
 import { SUBMODULES } from '@/lib/submodules';
 import { combine, useStore } from '@/lib/store';
@@ -53,7 +53,9 @@ export default function AppShell({ moduleId, datasetKey, title, subtitle, childr
       {open && <div className="sidebar-mobile-overlay" onClick={() => setOpen(false)} aria-hidden />}
       <div className="main-content">
         <Header title={title} subtitle={subtitle} onMenu={() => setOpen(true)} />
-        <main id="main-content" className="page-container page-enter">{children}</main>
+        <main id="main-content" className="page-container page-enter">
+          {children}
+        </main>
         <footer className="app-footer no-print">
           <span>© 2026 {COMPANY.name}</span>
           <span>Powered by {CONSULTANT.name}</span>
@@ -68,7 +70,7 @@ function Sidebar({ moduleId, datasetKey, open, onClose }) {
     <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Navigasi utama">
       <div className="sidebar-logo">
         <Link href="/">
-          <Image src="/brand/sj-logo.png" alt="Logo PT Safarijunie Textindo" width={44} height={44} priority style={{ objectFit: 'contain' }} />
+          <Image src="/brand/sj-logo.png" alt="Logo PT Safarijunie Textindo Industry" width={44} height={44} priority style={{ objectFit: 'contain' }} />
           <span className="sidebar-logo-text">
             <span className="sidebar-logo-name">Safarijunie</span>
             <span className="sidebar-logo-sub">IMS Digital System</span>
@@ -118,11 +120,11 @@ function useSearchIndex() {
   return useMemo(() => Object.entries(DATASETS).flatMap(([key, ds]) => combine(key, st).map((r) => ({
     key,
     id: r.id,
-    code: r.kode ?? r.id,
+    code: r.nomorDokumen || r.kode || r.id,
     title: String(r[ds.titleKey] ?? ''),
     dataset: SUBMODULES[key].short,
     module: moduleById(ds.module),
-    hay: `${r.id} ${r.kode ?? ''} ${r[ds.titleKey] ?? ''}`.toLowerCase(),
+    hay: `${r.id} ${r.nomorDokumen || r.kode || ''} ${r[ds.titleKey] ?? ''}`.toLowerCase(),
   }))), [st]);
 }
 
@@ -160,7 +162,7 @@ function GlobalSearch() {
       <input
         ref={ref}
         value={q}
-        placeholder="Cari CAPA, dokumen, karyawan (Ctrl+K)"
+        placeholder="Cari sasaran, risiko, dokumen (Ctrl+K)"
         aria-label="Pencarian global"
         onChange={(e) => { setQ(e.target.value); setSel(0); }}
         onFocus={() => setFocus(true)}
@@ -209,6 +211,8 @@ function useSidebarHidden() {
 }
 
 function Header({ title, subtitle, onMenu }) {
+  const st = useStore();
+  const notifications = useMemo(() => notificationsOf((key) => combine(key, st)), [st]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [sidebarHidden, toggleSidebar] = useSidebarHidden();
   const t = todayLabel();
@@ -225,17 +229,18 @@ function Header({ title, subtitle, onMenu }) {
       <div className="header-actions">
         <GlobalSearch />
         <div style={{ position: 'relative' }}>
-          <button type="button" className="header-btn" aria-label={`Notifikasi, ${NOTIFICATIONS.length} baru`} aria-expanded={notifOpen} onClick={() => setNotifOpen((v) => !v)}>
+          <button type="button" className="header-btn" aria-label={`Notifikasi, ${notifications.length} baru`} aria-expanded={notifOpen} onClick={() => setNotifOpen((v) => !v)}>
             <Bell size={20} />
-            <span className="notif-count">{NOTIFICATIONS.length}</span>
+            {notifications.length > 0 && <span className="notif-count">{notifications.length}</span>}
           </button>
           {notifOpen && (
             <>
               <div className="menu-backdrop" onClick={() => setNotifOpen(false)} />
               <div className="popover" role="menu">
-                <div className="popover-head">Notifikasi & To-do <span className="badge badge-danger plain">{NOTIFICATIONS.length} baru</span></div>
+                <div className="popover-head">Notifikasi & To-do <span className="badge badge-danger plain">{notifications.length} baru</span></div>
                 <div className="feed" style={{ maxHeight: 420, overflowY: 'auto' }}>
-                  {NOTIFICATIONS.map((n) => {
+                  {notifications.length === 0 && <div className="cell-empty">Belum ada notifikasi.</div>}
+                  {notifications.map((n) => {
                     const Icon = moduleById(n.module).icon;
                     return (
                     <Link key={n.id} href={n.href} className="feed-item" onClick={() => setNotifOpen(false)}>
@@ -254,10 +259,10 @@ function Header({ title, subtitle, onMenu }) {
           <strong>{t.day}</strong>{t.date}
         </div>
         <div className="user-chip">
-          <span className="user-avatar" aria-hidden>{initials(DEMO_USER.name)}</span>
+          <span className="user-avatar" aria-hidden>{initials(WORKSPACE_ROLE.name)}</span>
           <span className="user-text">
-            <span className="user-name">{DEMO_USER.name}</span>
-            <span className="user-role">{DEMO_USER.role}</span>
+            <span className="user-name">{WORKSPACE_ROLE.name}</span>
+            <span className="user-role">{WORKSPACE_ROLE.role}</span>
           </span>
         </div>
       </div>

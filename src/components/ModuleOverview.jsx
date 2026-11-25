@@ -13,6 +13,7 @@ import { SUBMODULES, chartOf } from '@/lib/submodules';
 import { DATASETS, drillHref, nounOf } from '@/lib/datasets';
 import { combine, localCount, useStore } from '@/lib/store';
 import { fmtNum } from '@/lib/data/core';
+import { documentReferences } from '@/lib/data/documents';
 
 export default function ModuleOverview({ moduleId }) {
   const mod = moduleById(moduleId);
@@ -20,6 +21,9 @@ export default function ModuleOverview({ moduleId }) {
   const router = useRouter();
   const st = useStore();
   const get = (k) => combine(k, st);
+  const refs = (documentReferences[moduleId] ?? [])
+    .map((path) => get('documents').find((row) => row.sumber === 'DOK ISO STI/' + path))
+    .filter(Boolean);
 
   return (
     <AppShell moduleId={mod.id} title={mod.short}>
@@ -28,11 +32,24 @@ export default function ModuleOverview({ moduleId }) {
         <div>
           <div className="page-eyebrow">{mod.clause}</div>
           <h1>{mod.name}</h1>
+          <p className="muted">{mod.description}</p>
         </div>
       </div>
       <ModuleTabs moduleId={mod.id} />
 
       <div className="stack">
+        {refs.length > 0 && (
+          <section>
+            <h2 className="section-heading">Referensi DOK ISO STI</h2>
+            <div className="quick-grid document-references">
+              {refs.map((doc) => (
+                <Link key={doc.id} href={drillHref('documents', { id: doc.id }, { open: doc.id })} className="btn btn-outline btn-sm">
+                  {doc.nama}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
         <div className="kpi-grid">
           {ov.kpis(get).map((k) => <Kpi key={k.label} {...k} />)}
         </div>

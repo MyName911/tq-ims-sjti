@@ -3,33 +3,20 @@
 // Satu grafik dari konfigurasi sub-modul. onPick(patch) menerima filter yang
 // dipilih ({ field: nilai }) atau { open: id } untuk membuka detail baris.
 import Link from 'next/link';
-import { BarList, Columns, Donut, PowerInterest, SERIES, StackedBars, TrendLines } from './charts';
-import { Card, Gauge, Badge } from './ui';
+import { BarList, Columns, Donut, SERIES, StackedBars, TrendLines } from './charts';
+import { Card } from './ui';
 import { toneOf } from '@/lib/tones';
-import { LAST6, MONTHS, avgBy, countBy, monthShort } from '@/lib/data/core';
-import { PERSPECTIVES, scoreLabel } from '@/lib/data/executive';
-import { levelOf } from '@/lib/data/risk';
+import { LAST6, MONTHS, avgBy, countBy, monthLabel, monthShort } from '@/lib/data/core';
 
 const TONE_HEX = { success: '#2f8a5f', warning: '#d4a73a', danger: '#c2453d', info: '#3b5bdb' };
 export const colorFor = (value, i) => TONE_HEX[toneOf(value)] ?? SERIES[i % SERIES.length];
-
-const TREND_KPIS = [
-  { kode: 'FIN-01', label: 'Pendapatan' },
-  { kode: 'CUS-01', label: 'Kepuasan pelanggan' },
-  { kode: 'CUS-02', label: 'On-time delivery' },
-  { kode: 'PRC-01', label: 'RFT sewing' },
-];
-const heatClass = (s) => (s >= 20 ? 'heat-ext' : s >= 10 ? 'heat-high' : s >= 5 ? 'heat-med' : 'heat-low');
 
 // Kolom URL yang "dimiliki" grafik: dikecualikan saat menghitung grafik itu
 // sendiri, supaya pilihan lain tetap terlihat (cross-filter).
 export function ownFields(cfg) {
   switch (cfg.type) {
     case 'monthly': return [cfg.field, cfg.stack].filter(Boolean);
-    case 'heatmap': return ['kemungkinan', 'dampak'];
-    case 'gauges': return ['perspektif'];
     case 'kpiTrend': return ['bulan'];
-    case 'powerInterest': return [];
     default: return [cfg.field];
   }
 }
@@ -37,7 +24,7 @@ export function ownFields(cfg) {
 function groups(cfg, rows) {
   const src = cfg.where ? rows.filter(cfg.where) : rows;
   let keys = cfg.order ?? Object.entries(countBy(src, cfg.field)).sort((a, b) => b[1] - a[1]).map(([k]) => k);
-  keys = keys.filter((k) => k !== 'undefined' && k !== 'null');
+  keys = keys.filter((k) => k && k !== 'undefined' && k !== 'null');
   const value = (k) => {
     const list = src.filter((r) => String(r[cfg.field]) === String(k));
     return cfg.agg ? Math.round(avgBy(list, cfg.agg.field)) : list.length;
@@ -49,13 +36,14 @@ function groups(cfg, rows) {
 export function ChartBody({ cfg, rows, selected = {}, onPick, height = 210 }) {
   const sel = (field) => selected[field] ?? [];
   const pick = (patch) => onPick?.(patch);
+  if (!rows.length) return <p className="cell-empty">Belum ada data untuk grafik ini.</p>;
 
   if (cfg.type === 'donut') {
     const s = sel(cfg.field);
     const data = groups(cfg, rows).map((g, i) => ({
       name: g.label, value: g.value, color: colorFor(g.key, i),
       active: s.includes(g.key), dim: s.length > 0 && !s.includes(g.key),
-      onClick: () => pick({ [cfg.field]: g.key }),
+      onClick: () => pick({ [cfg.field]: g.key, ...(cfg.whereFilter ?? {}) }),
     }));
     return <Donut data={data} height={height * 0.72} legend="side" />;
   }
@@ -89,77 +77,23 @@ export function ChartBody({ cfg, rows, selected = {}, onPick, height = 210 }) {
     );
   }
 
-  if (cfg.type === 'heatmap') {
-    const active = rows.filter((r) => r.jenis === 'Risiko' && r.status !== 'Closed');
-    const selL = sel('kemungkinan');
-    const selI = sel('dampak');
-    return (
-      <div className="heatmap">
-        {[5, 4, 3, 2, 1].map((l) => (
-          <div key={l} style={{ display: 'contents' }}>
-            <span className="axis">{l}</span>
-            {[1, 2, 3, 4, 5].map((i) => {
-              const n = active.filter((r) => r.kemungkinan === l && r.dampak === i).length;
-              const on = selL.includes(String(l)) && selI.includes(String(i));
-              const label = `Kemungkinan ${l}, dampak ${i} (${levelOf(l * i)})`;
-              return n ? (
-                <button key={i} type="button" className={`heat-cell ${heatClass(l * i)} ${on ? 'on' : ''}`} title={`${label}: ${n} risiko`} onClick={() => pick({ kemungkinan: String(l), dampak: String(i) })}>{n}</button>
-              ) : <span key={i} className={`heat-cell empty ${heatClass(l * i)}`} title={label} />;
-            })}
-          </div>
-        ))}
-        <span />
-        {[1, 2, 3, 4, 5].map((i) => <span key={i} className="axis">{i}</span>)}
-        <span />
-        <span className="heat-caption">Kemungkinan (baris), dampak (kolom)</span>
-      </div>
-    );
-  }
-
-  if (cfg.type === 'powerInterest') {
-    return (
-      <>
-        <PowerInterest data={rows} height={height + 40} onPick={(d) => pick({ open: d.id })} />
-        <div className="legend-inline" style={{ justifyContent: 'center' }}>
-          <span><i style={{ background: '#3b5bdb', borderRadius: '50%' }} />Internal</span>
-          <span><i style={{ background: '#d4a73a', borderRadius: '50%' }} />Eksternal</span>
-        </div>
-      </>
-    );
-  }
-
-  if (cfg.type === 'gauges') {
-    const s = sel('perspektif');
-    return (
-      <div className="gauge-grid">
-        {PERSPECTIVES.map((p) => {
-          const list = rows.filter((r) => r.perspektif === p.key);
-          const v = list.length ? Math.round(avgBy(list, (r) => Math.min(100, r.capaian))) : 0;
-          return (
-            <button key={p.key} type="button" className={`gauge ${s.includes(p.key) ? 'on' : ''}`} onClick={() => pick({ perspektif: p.key })}>
-              <span className="gauge-name">{p.label}</span>
-              <Gauge value={v} size={76} stroke={8} />
-              <Badge value={scoreLabel(v)} />
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
   if (cfg.type === 'kpiTrend') {
-    const data = MONTHS.map((m) => ({
-      label: monthShort(m), bulan: m,
-      ...Object.fromEntries(TREND_KPIS.map((t) => {
-        const r = rows.filter((x) => x.kode === t.kode && x.bulan === m).at(-1);
-        return [t.label, r ? r.capaian : null];
+    const points = rows.filter((r) => Number.isFinite(r.capaian) && r.bulan && r.kode);
+    if (!points.length) return <p className="cell-empty">Belum ada realisasi yang dapat dihitung.</p>;
+    const codes = Array.from(new Map(points.map((r) => [r.kode, r.kpi])), ([kode, kpi]) => ({ kode, label: kode + ' · ' + kpi })).slice(0, 6);
+    const months = [...new Set(points.map((r) => r.bulan))].sort();
+    const data = months.map((m) => ({
+      label: monthLabel(m), bulan: m,
+      ...Object.fromEntries(codes.map((item) => {
+        const point = points.find((r) => r.kode === item.kode && r.bulan === m);
+        return [item.label, point?.capaian ?? null];
       })),
     }));
     return (
       <>
-        <TrendLines data={data} height={height} unit="%" target={100} yDomain={[80, 110]} yTicks={[80, 90, 100, 110]}
-          series={TREND_KPIS.map((t, i) => ({ key: t.label, color: SERIES[i] }))} onPick={(row) => pick({ bulan: row.bulan })} />
-        <div className="legend-inline">{TREND_KPIS.map((t, i) => <span key={t.kode}><i className="line" style={{ background: SERIES[i] }} />{t.label}</span>)}</div>
+        <TrendLines data={data} height={height} unit="%" target={100} yDomain={[0, 'auto']}
+          series={codes.map((item, i) => ({ key: item.label, color: SERIES[i] }))} onPick={(row) => pick({ bulan: row.bulan })} />
+        <div className="legend-inline">{codes.map((item, i) => <span key={item.kode}><i className="line" style={{ background: SERIES[i] }} />{item.label}</span>)}</div>
       </>
     );
   }

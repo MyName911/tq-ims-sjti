@@ -1,105 +1,82 @@
-// Data dummy: Informasi terdokumentasi (Klausul 7.5): akses, proteksi, retensi, dan disposisi.
-import { rng, PEOPLE, TODAY, addDays, pad, daysBetween, monthOf } from './core';
+// Register katalog dari DOK ISO STI. ID katalog terpisah dari nomor dokumen.
+import { pad } from './core';
+import { documentPaths } from './sjti-document-paths';
 
 export const DOC_CATEGORIES = [
-  { key: 'Manual', code: 'MAN', color: '#3b5bdb' },
-  { key: 'Prosedur (SOP)', code: 'SOP', color: '#d4a73a' },
-  { key: 'Instruksi Kerja', code: 'IK', color: '#8fa2e6' },
-  { key: 'Formulir', code: 'FRM', color: '#5f6f86' },
-  { key: 'Rekaman', code: 'REK', color: '#b9c3d6' },
-  { key: 'Dokumen Eksternal', code: 'EXT', color: '#2c4aa8' },
+  { key: 'Manual', code: 'MAN' },
+  { key: 'Prosedur (SOP)', code: 'SOP' },
+  { key: 'Instruksi Kerja', code: 'IK' },
+  { key: 'Standar', code: 'STD' },
+  { key: 'Dokumen MR', code: 'MR' },
+  { key: 'Formulir', code: 'FRM' },
+  { key: 'Rekaman', code: 'REK' },
+  { key: 'Dokumen Eksternal', code: 'EXT' },
 ];
 
 export const DEPT_CODE = {
-  Cutting: 'CUT', Sewing: 'SEW', Finishing: 'FNS', 'Quality Control': 'QC', Warehouse: 'WH', PPIC: 'PPC',
-  Maintenance: 'MTC', Merchandising: 'MD', Purchasing: 'PUR', 'HR & GA': 'HRG', IT: 'IT', Finance: 'FA', QMR: 'QMR',
+  MR: 'MR', 'Audit Mutu Internal': 'AMI', Utility: 'UTL', PPC: 'PPC', Persiapan: 'PSP',
+  Laborat: 'LAB', Loom: 'LOOM', Maintenance: 'MTC', Gudang: 'GDG', GA: 'GA', MIS: 'MIS',
+  Pembelian: 'PMB', Marketing: 'MKT', FAT: 'FAT', 'QC Weaving': 'QCW', Finishing: 'FNS',
+  'ACC FIN TAX': 'AFT', 'HRD P2K3': 'HRP', 'HRD Legal': 'HRL', 'Maintenance Finishing': 'MCF',
 };
 
-// Proses per departemen yang menjadi SOP, IK, formulir, dan rekaman.
-const PROCESSES = {
-  Cutting: ['Spreading kain', 'Pembuatan marker', 'Pemotongan panel', 'Numbering & bundling', 'Relaxing kain'],
-  Sewing: ['Setting line produksi', 'Operasi jahit kritis', 'Inline inspection', 'Line balancing', 'Penanganan jarum patah'],
-  Finishing: ['Trimming & thread cutting', 'Pressing & ironing', 'Folding & packing', 'Metal detecting', 'Washing garmen'],
-  'Quality Control': ['Inspeksi kain masuk (4-point)', 'Inspeksi AQL final', 'Pengukuran garmen', 'Kalibrasi alat ukur', 'Pengendalian produk tidak sesuai'],
-  Warehouse: ['Penerimaan bahan baku', 'Penyimpanan & FIFO', 'Pengeluaran bahan ke produksi', 'Stock opname', 'Pengiriman barang jadi'],
-  PPIC: ['Perencanaan produksi', 'Material requirement planning', 'Monitoring output harian', 'Pengendalian kapasitas'],
-  Maintenance: ['Preventive maintenance mesin jahit', 'Perbaikan breakdown', 'Pengelolaan spare part', 'Pemeliharaan utilitas'],
-  Merchandising: ['Review order & kontrak buyer', 'Pengembangan sampel', 'Approval sampel buyer', 'Komunikasi pelanggan'],
-  Purchasing: ['Seleksi & evaluasi pemasok', 'Pembelian bahan baku', 'Pembelian aksesoris'],
-  'HR & GA': ['Rekrutmen & seleksi', 'Pelatihan & kompetensi', 'Penilaian kinerja', 'Tanggap darurat', 'Pengelolaan pengaduan karyawan'],
-  IT: ['Backup & restore data', 'Pengelolaan hak akses', 'Penanganan insiden TI'],
-  Finance: ['Pengelolaan piutang', 'Perhitungan HPP'],
-  QMR: ['Pengendalian informasi terdokumentasi', 'Audit internal', 'Tinjauan manajemen', 'Tindakan korektif (CAPA)', 'Pengelolaan risiko & peluang', 'Penanganan keluhan pelanggan'],
+const departmentAliases = {
+  UTY: 'Utility', LAB: 'Laborat', MKT: 'Marketing', 'MTC FINISING': 'Maintenance Finishing',
+  'PROD. FINISHING': 'Finishing', 'PROD. LOOM': 'Loom', 'PROD. PERSIAPAN': 'Persiapan',
 };
 
-const MANUALS = [
-  ['Manual Sistem Manajemen Mutu ISO 9001:2026', 'QMR'],
-  ['Manual Mutu Produk & Standar Inspeksi', 'Quality Control'],
-  ['Manual Social Compliance', 'HR & GA'],
-  ['Manual K3 & Tanggap Darurat', 'HR & GA'],
-];
-const EXTERNALS = [
-  ['ISO 9001:2026 Quality Management Systems', 'QMR'],
-  ['Buyer Quality Manual Nordline Apparel', 'Merchandising'],
-  ['Buyer Packing & Labeling Guide Kazuo Retail', 'Merchandising'],
-  ['Restricted Substances List (RSL) Buyer', 'Finishing'],
-  ['UU No. 13/2003 & PP Turunan Ketenagakerjaan', 'HR & GA'],
-  ['ANSI/ASQ Z1.4 Sampling Procedures (AQL)', 'Quality Control'],
-  ['Manual Mesin Jahit Lockstitch', 'Maintenance'],
-  ['Peraturan Kawasan Berikat Bea Cukai', 'Finance'],
-];
-
-const CLAUSE_OF = {
-  Cutting: '8.5.1', Sewing: '8.5.1', Finishing: '8.5.4', 'Quality Control': '8.6', Warehouse: '8.5.4', PPIC: '8.1',
-  Maintenance: '7.1.3', Merchandising: '8.2', Purchasing: '8.4', 'HR & GA': '7.2', IT: '7.1.3', Finance: '7.1', QMR: '7.5',
+const verifiedDocumentHeaders = {
+  'MR/01~QUALITY MANUAL.pdf': ['QM/MR/001', 'Rev. 03', '2025-04-01'],
+  'MR/04~KONTEK ORGANISASI.pdf': ['FOM/MR/001', 'Rev. 00'],
+  'MR/05~IDENTIFIKASI RESIKO DAN PELUANG.pdf': ['FOM/MR/002', 'Rev. 00'],
+  'MR/06~SASARAN MUTU..pdf': ['FOM/MR/003', 'Rev. 01'],
+  'MR/07~PROGRAM KERJA.pdf': ['FOM/MR/004', 'Rev. 00'],
+  'MR/08~PENGETAHUAN ORGANISASI.pdf': ['FOM/MR/005', 'Rev. 00'],
+  'SOP/SOP AUDIT MUTU INTERNAL.pdf': ['SOP/AMI/001', 'Rev. 01'],
 };
 
-function buildDocuments() {
-  const r = rng('documents');
-  const rows = [];
-  const counters = {};
-  const add = (nama, kategori, departemen, extra = {}) => {
-    const cat = DOC_CATEGORIES.find((c) => c.key === kategori);
-    const key = `${cat.code}-${DEPT_CODE[departemen]}`;
-    counters[key] = (counters[key] ?? 0) + 1;
-    const revisi = r.weighted([[0, 3], [1, 4], [2, 3], [3, 2], [4, 1], [5, 0.5]]);
-    const terbit = addDays(TODAY, -r.int(15, 980));
-    const status = extra.status ?? r.weighted([['Aktif', 88], ['Draft', 3], ['Review', 3.5], ['Approval', 2], ['Kadaluarsa', 2.5], ['Obsolete', 1]]);
-    const reviewBerikut = status === 'Kadaluarsa' ? addDays(TODAY, -r.int(5, 90)) : addDays(terbit, 730) < TODAY ? addDays(TODAY, r.int(10, 300)) : addDays(terbit, 730);
-    const isRecord = kategori === 'Rekaman';
-    rows.push({
-      id: `${cat.code}-${DEPT_CODE[departemen]}-${pad(counters[key])}`,
-      nama,
-      kategori,
-      departemen,
-      revisi: `Rev. ${String(revisi).padStart(2, '0')}`,
-      tglTerbit: terbit,
-      bulanTerbit: monthOf(terbit),
-      tglReview: reviewBerikut,
-      sisaHariReview: daysBetween(TODAY, reviewBerikut),
-      status,
-      pemilik: r.pick(PEOPLE.slice(0, 40)),
-      akses: r.weighted([['Internal', 6], ['Terbatas', 3], ['Rahasia', 1]]),
-      klausul: extra.klausul ?? CLAUSE_OF[departemen],
-      dilihat: Math.round((kategori === 'Manual' ? 180 : kategori === 'Prosedur (SOP)' ? 90 : 40) * (0.3 + r.next() * 1.4)),
-      retensi: isRecord ? r.pick(['1 tahun', '3 tahun', '5 tahun']) : '-',
-      disposisi: status === 'Obsolete' ? 'Diarsipkan (watermark OBSOLETE)' : isRecord ? r.pick(['Musnahkan setelah retensi', 'Arsip permanen']) : 'Tinjau ulang 2 tahunan',
-      format: kategori === 'Formulir' || kategori === 'Rekaman' ? r.pick(['XLSX', 'PDF', 'Form Digital']) : 'PDF',
-    });
-  };
-  for (const [nama, dept] of MANUALS) add(nama, 'Manual', dept, { status: 'Aktif', klausul: '4-10' });
-  for (const [dept, processes] of Object.entries(PROCESSES)) {
-    for (const p of processes) {
-      add(`Prosedur ${p}`, 'Prosedur (SOP)', dept);
-      const ik = r.int(1, 3);
-      for (let i = 0; i < ik; i++) add(`IK ${p}${ik > 1 ? ` (${['Tahap Persiapan', 'Tahap Pelaksanaan', 'Tahap Pemeriksaan'][i]})` : ''}`, 'Instruksi Kerja', dept);
-      const frm = r.int(1, 2);
-      for (let i = 0; i < frm; i++) add(`Formulir ${p}${frm > 1 ? ` (${['Checklist', 'Laporan'][i]})` : ''}`, 'Formulir', dept);
-      if (r.next() < 0.85) add(`Rekaman ${p} ${r.pick(['Harian', 'Mingguan', 'Bulanan'])}`, 'Rekaman', dept);
-    }
-  }
-  for (const [nama, dept] of EXTERNALS) add(nama, 'Dokumen Eksternal', dept);
-  return rows;
+function departmentOf(label) {
+  return departmentAliases[label] ?? Object.keys(DEPT_CODE).find((dept) => dept.toUpperCase() === label);
 }
 
-export const documents = buildDocuments();
+export const documents = documentPaths.map(([path, ...copies], index) => {
+  const [folder, subfolder] = path.split('/');
+  const filename = path.split('/').at(-1);
+  const format = filename.split('.').at(-1).toUpperCase();
+  const stem = filename.slice(0, -(format.length + 1));
+  const title = stem.replace(/^[A-Z]*\d+\s*~\s*/i, '').replace(/\.+$/, '').trim();
+  const mrType = { '01': 'Manual', '02': 'Prosedur (SOP)', '03': 'Standar' }[stem.slice(0, 2)];
+  const kategori = {
+    MR: mrType ?? 'Dokumen MR', SOP: 'Prosedur (SOP)', STANDARD: 'Standar', 'INSTRUKSI KERJA': 'Instruksi Kerja',
+  }[folder];
+  const departemen = folder === 'MR' ? 'MR' : departmentOf(folder === 'SOP'
+    ? title.replace(/^SOP /, '')
+    : subfolder.replace(/^\d+~\s*/, ''));
+  const revisionInFilename = stem.match(/\bREV\s+(\d+)$/i)?.[1];
+  const [nomorDokumen, revisi, tglTerbit] = verifiedDocumentHeaders[path] ?? [];
+  return {
+    id: 'STI-SRC-' + pad(index + 1),
+    nama: title,
+    kategori,
+    departemen,
+    folderSumber: folder,
+    nomorDokumen,
+    revisi: revisi ?? (revisionInFilename ? 'Rev. ' + revisionInFilename : undefined),
+    tglTerbit,
+    bulanTerbit: tglTerbit?.slice(0, 7),
+    format,
+    status: 'Belum Diverifikasi',
+    sumber: 'DOK ISO STI/' + path,
+    salinan: copies.length ? copies.map((copy) => 'DOK ISO STI/' + copy).join(', ') : undefined,
+  };
+});
+
+export const documentReferences = {
+  pestel: ['MR/04~KONTEK ORGANISASI.pdf'],
+  executive: ['MR/06~SASARAN MUTU..pdf', 'MR/07~PROGRAM KERJA.pdf', 'STANDARD/MR/STD MR 001 Pedoman Tinjauan Manajemen REV 01.docx'],
+  risk: ['MR/05~IDENTIFIKASI RESIKO DAN PELUANG.pdf', 'STANDARD/MR/STD MR 002 Pedoman Identifikasi Risiko dan Peluang.docx'],
+  skill: ['MR/08~PENGETAHUAN ORGANISASI.pdf'],
+  edoc: ['MR/01~QUALITY MANUAL.pdf', 'MR/02~SOP MR.pdf'],
+  audit: ['SOP/SOP AUDIT MUTU INTERNAL.pdf', 'STANDARD/MARKETING/STD PENILAIAN QUESTIONERY.doc'],
+  capa: ['MR/02~SOP MR.pdf'],
+};

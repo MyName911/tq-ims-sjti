@@ -1,10 +1,11 @@
 'use client';
 
-// Penyimpanan pratinjau: data awal (dummy) digabung dengan perubahan pengguna
+// Penyimpanan pratinjau: data awal STI digabung dengan perubahan pengguna
 // yang disimpan di localStorage browser ini. Tidak ada yang dikirim ke server.
 // Per dataset disimpan { added: [], edits: { id: patch }, deleted: [id] }.
 import { useSyncExternalStore } from 'react';
 import { DATASETS } from './datasets';
+import { achievementOf, kpiStatus } from './data/executive';
 
 const STORAGE_KEY = 'tq-ims:data:v1';
 const EMPTY = {};
@@ -61,8 +62,9 @@ export function combine(key, st) {
     return rows;
   }
   const s = st[key];
+  const measurements = key === 'kpi' ? combine('kpi-monthly', st) : null;
   const hit = cache.get(key);
-  if (hit && hit.s === s && hit.base === ds.rows) return hit.rows;
+  if (hit && hit.s === s && hit.measurements === measurements) return hit.rows;
   let rows = ds.rows;
   if (s) {
     const deleted = new Set(s.deleted);
@@ -71,7 +73,21 @@ export function combine(key, st) {
       .map((r) => (s.edits[r.id] ? { ...r, ...s.edits[r.id], _local: 'edited' } : r));
     rows = [...s.added.map((r) => ({ ...r, _local: 'new' })), ...rows];
   }
-  cache.set(key, { s, base: ds.rows, rows });
+  if (measurements?.length) {
+    const latest = new Map();
+    for (const point of measurements) {
+      if (Number.isFinite(point.realisasi) && (!latest.has(point.kode) || latest.get(point.kode).bulan < point.bulan)) {
+        latest.set(point.kode, point);
+      }
+    }
+    rows = rows.map((r) => {
+      const point = latest.get(r.kode);
+      if (!point) return r;
+      const capaian = achievementOf(point.realisasi, point.target ?? r.target, r.arah?.startsWith('Lebih rendah') ? 'down' : 'up');
+      return { ...r, realisasi: point.realisasi, bulanRealisasi: point.bulan, capaian, status: kpiStatus(capaian) };
+    });
+  }
+  cache.set(key, { s, measurements, rows });
   return rows;
 }
 

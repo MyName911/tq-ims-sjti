@@ -1,175 +1,67 @@
-// Data dummy: Tindakan menangani risiko & peluang (Klausul 6.1) dan sasaran mutu (6.2).
-import { rng, PEOPLE, MONTHS, TODAY, addDays, pad } from './core';
-import { pestelIssues } from './pestel';
+export const RISK_LEVELS = ['Tidak Dapat Diterima', 'Sangat Berbahaya', 'Berbahaya', 'Dapat Diterima', 'Kecil'];
+export const OPPORTUNITY_LEVELS = ['Segera Ditindaklanjuti', 'Sangat Menguntungkan', 'Dapat Diterima', 'Dipertimbangkan', 'Kecil'];
+export const PRIORITY_RISK_LEVELS = RISK_LEVELS.slice(0, 3);
 
-export const levelOf = (score) => (score >= 20 ? 'Extreme' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low');
-export const LEVEL_COLORS = { Extreme: '#c2453d', High: '#d08a4a', Medium: '#d4a73a', Low: '#2f8a5f' };
-export const RISK_LEVELS = ['Extreme', 'High', 'Medium', 'Low'];
-
-// [deskripsi, kategori, departemen, L, I, pengendalian]
-const RISKS = [
-  ['Keterlambatan kedatangan kain dari pemasok', 'Rantai Pasok', 'Purchasing', 4, 5, 'Safety stock 2 minggu untuk kain fast moving & dual sourcing'],
-  ['Fluktuasi harga kain cotton', 'Keuangan', 'Purchasing', 4, 3, 'Kontrak harga 6 bulan & natural hedging USD'],
-  ['Shading / beda warna antar roll kain', 'Kualitas', 'Cutting', 3, 4, 'Shade band & pengelompokan roll sebelum cutting'],
-  ['Kesalahan ukuran (measurement) di luar toleransi', 'Kualitas', 'Sewing', 3, 4, 'Inline measurement tiap 2 jam & pola master terverifikasi'],
-  ['Kontaminasi jarum patah pada produk', 'Kualitas', 'Finishing', 2, 5, 'Prosedur kontrol jarum & metal detector 100%'],
-  ['Turnover operator sewing tinggi', 'SDM', 'HR & GA', 4, 3, 'Skill bonus, program buddy, & jalur karier operator'],
-  ['Kerusakan mesin jahit saat peak season', 'Operasional', 'Maintenance', 3, 3, 'Preventive maintenance terjadwal & stok spare part kritis'],
-  ['Kegagalan memenuhi on-time delivery', 'Pelanggan', 'PPIC', 4, 5, 'Capacity planning mingguan & line balancing'],
-  ['Serangan ransomware pada server ERP', 'IT', 'IT', 2, 5, 'Backup offline harian, MFA, & patch rutin'],
-  ['Kebakaran di gudang bahan baku', 'K3', 'Warehouse', 1, 5, 'Sprinkler, APAR, & simulasi tanggap darurat'],
-  ['Kecelakaan kerja di area cutting', 'K3', 'Cutting', 2, 4, 'Sarung tangan anti potong & guard pisau'],
-  ['Temuan major audit social compliance buyer', 'Kepatuhan', 'HR & GA', 2, 5, 'Audit internal social compliance tiap triwulan'],
-  ['Ketidaksesuaian label komposisi & care label', 'Kepatuhan', 'Quality Control', 3, 3, 'Checklist verifikasi label per style'],
-  ['Keterlambatan approval sampel dari buyer', 'Pelanggan', 'Merchandising', 2, 2, 'Pre-production meeting & digital sample approval'],
-  ['Kenaikan UMK melebihi proyeksi anggaran', 'Keuangan', 'Finance', 3, 3, 'Simulasi biaya & target efisiensi line'],
-  ['Limbah cair finishing melebihi baku mutu', 'Lingkungan', 'Finishing', 2, 4, 'Uji effluent bulanan & pemeliharaan IPAL'],
-  ['Kehilangan data akibat human error', 'IT', 'IT', 2, 2, 'Hak akses berbasis peran & versioning dokumen'],
-  ['Akurasi stok bahan baku rendah', 'Operasional', 'Warehouse', 3, 3, 'Stock opname siklus & barcode bin location'],
-  ['Pemasok aksesoris tidak memenuhi spesifikasi', 'Rantai Pasok', 'Purchasing', 3, 3, 'Incoming inspection & evaluasi pemasok triwulanan'],
-  ['Lead time produksi melebihi rencana', 'Operasional', 'PPIC', 3, 3, 'Monitoring output per jam & eskalasi otomatis'],
-  ['Keterlambatan kalibrasi alat ukur QC', 'Kualitas', 'Quality Control', 2, 3, 'Jadwal kalibrasi digital & reminder'],
-  ['Ketergantungan pada 1 buyer utama (>40% omzet)', 'Pasar', 'Merchandising', 3, 4, 'Diversifikasi buyer Jepang & Australia'],
-  ['Mogok kerja / perselisihan hubungan industrial', 'SDM', 'HR & GA', 1, 4, 'Bipartit triwulanan & mekanisme grievance'],
-  ['Pemadaman listrik PLN', 'Operasional', 'Maintenance', 2, 2, 'Genset 1.000 kVA & SOP switching'],
-  ['Banjir musiman di akses jalan pabrik', 'Lingkungan', 'PPIC', 2, 2, 'Rencana kontinjensi pengiriman & gudang transit'],
-  ['Desain/pola buyer bocor ke pihak lain', 'Kepatuhan', 'Merchandising', 1, 4, 'NDA, kontrol akses CAD, & watermark'],
-  ['Regulasi jejak karbon buyer Uni Eropa', 'Kepatuhan', 'QMR', 3, 4, 'Inventarisasi emisi scope 1 & 2'],
-  ['Kualitas jahitan operator baru rendah', 'Kualitas', 'Sewing', 4, 3, 'Training center 2 minggu sebelum masuk line'],
-  ['Fabric utilization di bawah target', 'Keuangan', 'Cutting', 2, 2, 'Marker digital & review efisiensi marker'],
-  ['Barang reject menumpuk tanpa disposisi', 'Kualitas', 'Quality Control', 2, 2, 'Rapat disposisi mingguan barang reject'],
-];
-
-// [deskripsi, kategori, departemen, L, I, rencana]
-const OPPORTUNITIES = [
-  ['Tarif preferensi IEU-CEPA untuk buyer Eropa', 'Pasar', 'Merchandising', 4, 4, 'Petakan 5 buyer Eropa potensial'],
-  ['Lini produk workwear & seragam', 'Pasar', 'Merchandising', 3, 4, 'Sampling 3 style workwear Q4'],
-  ['Auto cutter untuk efisiensi kain', 'Teknologi', 'Cutting', 3, 4, 'Pilot 1 unit auto cutter'],
-  ['Barcode bundle tracking real-time', 'Teknologi', 'PPIC', 4, 3, 'Implementasi di 4 line sewing'],
-  ['PLTS atap untuk efisiensi energi', 'Lingkungan', 'Maintenance', 3, 3, 'Studi kelayakan & penawaran EPC'],
-  ['Daur ulang perca kain bersama UMKM', 'Lingkungan', 'Warehouse', 4, 2, 'MoU dengan 2 UMKM lokal'],
-  ['Fasilitas KITE bahan baku impor', 'Keuangan', 'Finance', 3, 3, 'Pengajuan ke Bea Cukai'],
-  ['Transisi ISO 9001:2026 sebagai nilai jual', 'Kepatuhan', 'QMR', 4, 3, 'Sertifikasi transisi sebelum Q2 2027'],
-  ['Program multi-skill operator', 'SDM', 'Sewing', 4, 3, 'Matriks skill & rotasi terencana'],
-  ['Portal buyer untuk tracking order', 'Teknologi', 'IT', 3, 3, 'Prototype portal di modul IMS 360'],
-];
-
-function buildRisks() {
-  const r = rng('risks');
-  const pestelRisk = pestelIssues.filter((p) => p.jenis === 'Risiko');
-  const pestelOpp = pestelIssues.filter((p) => p.jenis === 'Peluang');
-  const make = (list, jenis, prefix, statuses) => list.map(([deskripsi, kategori, departemen, L, I, kendali], i) => {
-    const skor = L * I;
-    const level = levelOf(skor);
-    const rL = Math.max(1, L - r.weighted([[0, 1], [1, 3], [2, 2]]));
-    const rI = Math.max(1, I - r.weighted([[0, 4], [1, 1]]));
-    const sumber = r.weighted([['PESTEL', 3], ['Proses', 4], ['Audit', 2], ['Stakeholder', 2]]);
-    const ref = sumber === 'PESTEL' ? r.pick(jenis === 'Risiko' ? pestelRisk : pestelOpp).id : null;
-    const status = r.weighted(statuses(level));
-    const bulan = r.pick(MONTHS);
-    return {
-      id: `${prefix}-${pad(i + 1)}`,
-      jenis,
-      deskripsi,
-      kategori,
-      departemen,
-      sumber,
-      ref,
-      kemungkinan: L,
-      dampak: I,
-      skor,
-      level,
-      residualKemungkinan: jenis === 'Risiko' ? rL : null,
-      residualDampak: jenis === 'Risiko' ? rI : null,
-      residualSkor: jenis === 'Risiko' ? rL * rI : null,
-      residualLevel: jenis === 'Risiko' ? levelOf(rL * rI) : null,
-      pengendalian: kendali,
-      status,
-      pic: r.pick(PEOPLE.slice(0, 28)),
-      bulan,
-      tanggal: r.dateIn(bulan),
-      target: status === 'Closed' || status === 'Terealisasi' ? null : addDays(TODAY, r.int(-20, 120)),
-    };
-  });
-  const risks = make(RISKS, 'Risiko', 'RSK', (lv) => (lv === 'Extreme' || lv === 'High'
-    ? [['Mitigasi', 6], ['Open', 3], ['Monitoring', 2]]
-    : [['Monitoring', 4], ['Mitigasi', 3], ['Closed', 3], ['Open', 1]]));
-  const opps = make(OPPORTUNITIES, 'Peluang', 'OPP', () => [['On Progress', 5], ['Rencana', 3], ['Terealisasi', 2]]);
-  return [...risks, ...opps];
-}
-
-export const risks = buildRisks();
-
-// ─── OKR / Sasaran mutu ────────────────────────────────────────────────────
-// [objective, [key result, target, satuan, arah], ...]
-const OKR_DEFS = [
-  ['O1, Buyer puas dan loyal', [
-    ['Customer satisfaction index ≥ 90%', 90, '%', 'up'],
-    ['Komplain pelanggan ≤ 3 kasus/bulan', 3, 'kasus', 'down'],
-    ['Repeat order dari buyer utama ≥ 85%', 85, '%', 'up'],
-    ['Respons komplain ≤ 24 jam', 24, 'jam', 'down'],
-  ]],
-  ['O2, Kualitas benar sejak awal', [
-    ['RFT sewing ≥ 92%', 92, '%', 'up'],
-    ['DHU end-line ≤ 3,5', 3.5, 'DHU', 'down'],
-    ['Lolos final inspection buyer ≥ 98%', 98, '%', 'up'],
-    ['COPQ ≤ 1,5% penjualan', 1.5, '%', 'down'],
-  ]],
-  ['O3, Pengiriman tepat waktu', [
-    ['On-time delivery ≥ 95%', 95, '%', 'up'],
-    ['Lead time produksi ≤ 35 hari', 35, 'hari', 'down'],
-    ['Akurasi rencana produksi mingguan ≥ 90%', 90, '%', 'up'],
-    ['Pemasok kain tepat waktu ≥ 92%', 92, '%', 'up'],
-  ]],
-  ['O4, SDM kompeten & aman', [
-    ['Karyawan kompeten sesuai matriks ≥ 75%', 75, '%', 'up'],
-    ['Jam pelatihan ≥ 24 jam/karyawan/tahun', 24, 'jam', 'up'],
-    ['Lost time injury = 0', 0, 'kasus', 'down'],
-    ['Turnover operator ≤ 2,5%/bulan', 2.5, '%', 'down'],
-  ]],
-  ['O5, Operasi digital & efisien', [
-    ['Proses terdigitalisasi ≥ 70%', 70, '%', 'up'],
-    ['Efisiensi line sewing ≥ 65%', 65, '%', 'up'],
-    ['Downtime mesin ≤ 40 jam/bulan', 40, 'jam', 'down'],
-    ['Dokumen SMM 100% di e-document', 100, '%', 'up'],
-  ]],
-  ['O6, Tumbuh berkelanjutan', [
-    ['Pendapatan ekspor tumbuh 12%', 12, '%', 'up'],
-    ['Konsumsi energi per pcs turun 5%', 5, '%', 'up'],
-    ['Ide kaizen terimplementasi ≥ 100/tahun', 100, 'ide', 'up'],
-  ]],
-];
-
-export const okrStatus = (p) => (p >= 100 ? 'Tercapai' : p >= 70 ? 'On Track' : p >= 40 ? 'At Risk' : 'Belum Tercapai');
-
-function buildOkr() {
-  const r = rng('okr');
-  const rows = [];
-  let n = 0;
-  for (const [objective, krs] of OKR_DEFS) {
-    for (const [kr, target, satuan, arah] of krs) {
-      const progress = r.weighted([[100, 9], [r.int(72, 98), 6], [r.int(45, 69), 2], [r.int(20, 38), 1]]);
-      n += 1;
-      let realisasi;
-      if (arah === 'up') realisasi = Math.round(target * Math.min(1.05, progress / 100 + (progress === 100 ? r.next() * 0.04 : 0)) * 10) / 10;
-      else realisasi = target === 0 ? (progress >= 100 ? 0 : 1) : Math.round((target * (progress >= 100 ? 0.95 : 100 / Math.max(progress, 1))) * 10) / 10;
-      rows.push({
-        id: `KR-${pad(n, 2)}`,
-        objective,
-        keyResult: kr,
-        target,
-        realisasi,
-        satuan,
-        progress,
-        status: okrStatus(progress),
-        pemilik: r.pick(PEOPLE.slice(0, 16)),
-        periode: 'FY 2026',
-        updateTerakhir: addDays(TODAY, -r.int(0, 14)),
-      });
-    }
+export function assessRisk(jenis, frekuensi, kemungkinan, dampak, diaturRegulasi) {
+  if (![frekuensi, kemungkinan, dampak].every((n) => Number.isInteger(n) && n >= 1 && n <= 5)) {
+    return { skor: null, level: null };
   }
-  return rows;
+  const skor = frekuensi * kemungkinan * dampak;
+  const band = skor >= 101 ? 0 : skor >= 76 ? 1 : skor >= 51 ? 2 : skor >= 26 ? 3 : 4;
+  if (jenis === 'Peluang') return { skor, level: OPPORTUNITY_LEVELS[band] };
+  const minBahaya = kemungkinan === 5 || dampak === 5 || diaturRegulasi;
+  return { skor, level: RISK_LEVELS[minBahaya ? Math.min(band, 2) : band] };
 }
 
-export const okrs = buildOkr();
-export const OBJECTIVES = OKR_DEFS.map(([o]) => o);
+const register = [
+  [1, 'Marketing', 'Risiko', 'Persaingan harga di pasar', 'Order berkurang dan stok kain menumpuk', 'Gudang, FAT', 'Stock ending balance dan kebijakan penentuan harga kain', [3, 4, 4], [3, 3, 3]],
+  [1, 'Marketing', 'Risiko', 'Komplain pelanggan tentang kualitas kain', 'Kehilangan order dan penurunan kepercayaan pelanggan', 'Marketing, PPQC', 'Kuesioner, SPKR, dan evaluasi kepuasan pelanggan', [3, 3, 3], [3, 3, 3]],
+  [2, 'PPC', 'Risiko', 'Perubahan konstruksi dari rencana awal', 'Order Marketing tidak terpenuhi dan aval meningkat', 'PPC, Produksi, Marketing', 'Keseimbangan produksi tenun dan persiapan serta pemantauan outstanding order Marketing', [3, 4, 2], [3, 3, 2]],
+  [2, 'PPC', 'Risiko', 'Aval benang melebihi standar', 'Pemborosan material dan biaya operasional naik', 'PPC', 'Laporan harian aval dan evaluasi rencana serta realisasi produksi', [5, 3, 3], [3, 3, 2]],
+  [2, 'PPC', 'Risiko', 'Benang berbeda lot', 'Kain belang dan komplain pelanggan', 'PPC, Loom, Persiapan', 'Surat komunikasi dan koordinasi alokasi benang pakan per blok', [4, 3, 3], [4, 3, 3]],
+  [2, 'PPC', 'Risiko', 'Over WIP', 'Biaya operasional tinggi', 'PPC, Produksi', 'Stok opname WIP dan pengaturan keseimbangan produksi setiap akhir bulan', [3, 3, 3], [3, 3, 3]],
+  [2, 'PPC', 'Risiko', 'Pakan rangkap', 'Roll kecil meningkat', 'PPC, Produksi, QC Weaving', 'Komunikasi ke Pembelian dan Persiapan serta laporan penyebab kain terpotong', [3, 3, 4], [3, 3, 3]],
+  [2, 'PPC', 'Risiko', 'Hasil produksi Finishing tidak stabil', 'Rencana produksi terganggu dan biaya operasional tinggi', 'PPC', 'Laporan produksi dan tindak lanjut dengan Marketing', [3, 4, 4], [5, 3, 3]],
+  [4, 'FAT', 'Risiko', 'Akses data real-time terbatas', 'Sistem administrasi DOS harus diakses lewat komputer LAN', 'FAT, MIS', 'Instruksi kerja dan pelatihan sistem berbasis web', [4, 2, 1], [2, 3, 2]],
+  [4, 'FAT', 'Peluang', 'Keamanan dan kecepatan akses data', 'Akses data operasional melalui sistem berbasis web', 'Kepala Bagian', 'Implementasi sistem berbasis web dan pemasangan perangkat lunak', [2, 5, 5], [1, 1, 1]],
+  [4, 'FAT', 'Risiko', 'Piutang tak tertagih', 'Penagihan piutang kurang efektif', 'FAT', 'Laporan piutang dan penagihan setiap minggu', [4, 5, 5], [4, 3, 3]],
+  [4, 'FAT', 'Peluang', 'Penyediaan barang mendesak melalui transaksi tunai', 'Pembelian dapat menyediakan barang mendesak', 'Pembelian', 'PO, mutasi AP, dan riset pasar', [5, 3, 1], [1, 1, 1]],
+  [4, 'FAT', 'Risiko', 'Nilai stok WIP dan aksesori berbeda dari stok fisik', 'Administrasi dan stok opname tidak rutin', 'FAT', 'Mutasi stok dan stok opname setiap bulan', [3, 3, 3], [2, 3, 2]],
+  [4, 'FAT', 'Risiko', 'Kenaikan harga bahan baku', 'Kontrak benang dengan harga sesuai sulit diperoleh', 'Pembelian', 'Penawaran, matriks pemasok, dan pembaruan harga mingguan', [3, 3, 3], [2, 2, 2]],
+  [4, 'FAT', 'Peluang', 'Buffer stock benang untuk operasional', 'Menjaga ketersediaan benang', 'FAT', 'Anggaran tahunan dan pengajuan pembayaran bahan baku', [3, 3, 1], [1, 1, 1]],
+  [4, 'FAT', 'Risiko', 'Perubahan peraturan perpajakan', 'Perubahan regulasi pemerintah', 'FAT', 'Pemantauan peraturan dan revisi anggaran arus kas', [1, 1, 1], [1, 1, 1], true],
+  [10, 'Finishing', 'Risiko', 'Tekanan uap kurang stabil', 'Kualitas kain tidak stabil', 'Finishing', 'Laporan produksi dan optimalisasi proses kain di CBR', [4, 3, 4], [3, 3, 3]],
+  [10, 'Finishing', 'Risiko', 'Susut kain tinggi', 'Komplain pelanggan', 'Finishing, Laborat', 'Pengujian shrinkage dan pengaturan overfeed pada stenter', [5, 3, 3], [4, 3, 3]],
+];
+
+export const risks = register.map(([halamanSumber, departemen, jenis, deskripsi, dampakUraian, pic, pengendalian, awal, akhir, diaturRegulasi], index) => {
+  const [frekuensi, kemungkinan, dampak] = awal;
+  const [residualFrekuensi, residualKemungkinan, residualDampak] = akhir;
+  const residual = assessRisk(jenis, ...akhir, diaturRegulasi);
+  return {
+    id: 'STI-IRP-' + (index + 1), halamanSumber, departemen, jenis, deskripsi, dampakUraian, pic, pengendalian,
+    sumber: 'FOM/MR/002', dokumenId: 'STI-SRC-005',
+    periode: [1, 4].includes(halamanSumber) ? 'Januari–Juni 2026' : 'Januari–Desember 2026',
+    frekuensi, kemungkinan, dampak, diaturRegulasi: diaturRegulasi ? 'Ya' : undefined, ...assessRisk(jenis, ...awal, diaturRegulasi),
+    residualFrekuensi, residualKemungkinan, residualDampak, residualSkor: residual.skor, residualLevel: residual.level,
+  };
+});
+
+const plans = [
+  [1, 'Marketing', 'Omset penjualan', 'Menjaga pelanggan aktif, mengaktifkan kembali pelanggan lama, dan menambah pelanggan baru.', '95%'],
+  [1, 'Marketing', 'Kepuasan pelanggan', 'Kunjungan pelanggan dua minggu sekali dan survei kepuasan enam bulan sekali.', '90%'],
+  [1, 'Marketing', 'Pemenuhan order produksi Weaving dan Finishing', 'Aktivasi pelanggan lama, penambahan pelanggan baru, dan survei pasar.', '95%'],
+  [3, 'Pembelian', 'Pemenuhan spesifikasi barang', 'Memastikan barang yang dipesan lewat PO datang sesuai spesifikasi dan kebutuhan.'],
+  [8, 'Loom Weaving I', 'Menekan roll kecil akibat cacat produksi', 'Briefing operator, menghentikan mesin yang berpotensi menimbulkan cacat, dan memperbaiki cacat di proses Loom.', 'Maks. 0,17%'],
+  [8, 'Loom Weaving I', 'Menekan BS akibat cacat kain', 'Memaksimalkan kontrol personel produksi terhadap mutu kain dan alokasi shuttle.', 'Maks. 0,15%'],
+  [13, 'QC Weaving', 'Ketersediaan dan mutu kain grey', 'Menindaklanjuti ketersediaan potongan kain dan memberi umpan balik ke Produksi atas sisa pakan atau fly waste.'],
+  [13, 'QC Weaving', 'Ketersediaan dan mutu kain finish', 'Menindaklanjuti ketersediaan kain finish dan memberi umpan balik terkait sobek, lubang, karat, dan lebar kurang.'],
+  [16, 'MIS', 'Kestabilan jaringan', 'Perbaikan jaringan sesuai work order dan penjadwalan perawatan komputer, telepon, serta CCTV.', '100%'],
+  [16, 'MIS', 'Kelancaran sistem', 'Pembersihan hard disk dan sistem serta backup data secara terjadwal.', '100%'],
+  [16, 'MIS', 'Ketepatan penyelesaian komplain', 'Perawatan terjadwal dan penyediaan stok suku cadang komputer, telepon, CCTV, dan printer.', 'Maks. 2 hari per perbaikan'],
+];
+
+export const okrs = plans.map(([halamanSumber, pemilik, objective, keyResult, targetSumber], index) => ({
+  id: 'STI-PKJ-' + (index + 1), keyResult, objective, pemilik, targetSumber,
+  periode: 'Juli–Desember 2026', dokumenId: 'STI-SRC-007', halamanSumber,
+}));
